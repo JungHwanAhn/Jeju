@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
 
         val signUpTextView = findViewById<TextView>(R.id.signUpTextView)
         signUpTextView.setOnClickListener {
-            val intent = Intent(this, SignUpActivity::class.java)
+            val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
         }
 
