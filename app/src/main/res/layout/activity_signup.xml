@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Email"
-        android:textColor="#FF0000"
+        android:textColor="@color/red"
         android:layout_marginStart="16dp"
         android:textSize="16sp"/>
 
@@ -40,7 +40,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Password"
-        android:textColor="#FF0000"
+        android:textColor="@color/red"
         android:layout_marginStart="16dp"
         android:textSize="16sp"/>
 
@@ -79,7 +79,7 @@
         android:text="Continue"
         android:textAllCaps="false"
         android:textSize="16sp"
-        android:backgroundTint="#FF9800"
+        android:backgroundTint="@color/orange"
         android:layout_margin="24dp"/>
 
     <LinearLayout
@@ -100,7 +100,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sign In"
-            android:textColor="#FF0000"
+            android:textColor="@color/red"
             android:layout_marginStart="10dp"
             android:textSize="16sp"/>
 

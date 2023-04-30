@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
-        android:textColor="#FF0000"
+        android:textColor="@color/red"
         android:text="Email"/>
 
     <EditText
@@ -33,7 +33,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#FF0000"
+        android:textColor="@color/red"
         android:text="Password"/>
 
     <EditText
@@ -47,7 +47,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#FF0000"
+        android:textColor="@color/red"
         android:text="Password Check"/>
 
     <EditText
@@ -63,7 +63,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Continue"
-        android:backgroundTint="#FF9800"
+        android:backgroundTint="@color/orange"
         android:layout_marginBottom="16dp"/>
 
     <LinearLayout
@@ -84,7 +84,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sign In"
-            android:textColor="#FF0000"
+            android:textColor="@color/red"
             android:layout_marginStart="10dp"
             android:textSize="16sp"/>
 

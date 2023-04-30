@@ -7,21 +7,24 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.example.jeju.databinding.ActivityHomeBinding
 import com.google.android.material.navigation.NavigationView
 
 class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
+    lateinit var binding: ActivityHomeBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home)
+        binding = ActivityHomeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val toolbar: Toolbar = findViewById(R.id.main_layout_toolbar) // toolBar를 통해 App Bar 생성
         setSupportActionBar(toolbar) // 툴바 적용
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true) // 드로어를 꺼낼 홈 버튼 활성화
-        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_menu) // 홈버튼 이미지 변경
+        supportActionBar?.setDisplayHomeAsUpEnabled(true) // 드로어를 꺼낼 메뉴 버튼 활성화
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_menu) // 메뉴 이미지 변경
         supportActionBar?.setDisplayShowTitleEnabled(false) // 툴바에 타이틀 안보이게
 
         // 네비게이션 드로어 생성
@@ -30,6 +33,12 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         // 네비게이션 드로어 내에있는 화면의 이벤트를 처리하기 위해 생성
         navigationView = findViewById(R.id.main_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
+
+        var fragmentList = listOf(HanraFragment(), OllehFragment())
+
+        val adapter = ViewPagerAdapter(this)
+        adapter.fragmentList = fragmentList
+        binding.viewPager.adapter = adapter
     }
 
     // 툴바 메뉴 버튼이 클릭 됐을 때 실행하는 함수
@@ -51,6 +60,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             R.id.item1-> Toast.makeText(this,"menu_item1 실행",Toast.LENGTH_SHORT).show()
             R.id.item2-> Toast.makeText(this,"menu_item2 실행",Toast.LENGTH_SHORT).show()
             R.id.item3-> Toast.makeText(this,"menu_item3 실행",Toast.LENGTH_SHORT).show()
+            R.id.item4-> Toast.makeText(this,"menu_item4 실행",Toast.LENGTH_SHORT).show()
         }
         return false
     }

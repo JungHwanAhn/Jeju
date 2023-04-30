@@ -41,7 +41,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Email"
-        android:textColor="#FF0000"
+        android:textColor="@color/red"
         android:layout_marginStart="16dp"
         android:textSize="16sp"/>
 
@@ -61,7 +61,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Password"
-        android:textColor="#FF0000"
+        android:textColor="@color/red"
         android:layout_marginStart="16dp"
         android:textSize="16sp"/>
 
@@ -82,7 +82,7 @@
         android:layout_marginTop="20dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:backgroundTint="#FF9800"
+        android:backgroundTint="@color/orange"
         android:text="Sign In"/>
 
     <LinearLayout
@@ -98,7 +98,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="#00FF00"
+            android:backgroundTint="@color/green"
             android:layout_marginEnd="5dp"
             android:text="Naver" />
 
@@ -108,7 +108,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="5dp"
-            android:backgroundTint="#FFEB00"
+            android:backgroundTint="@color/yellow"
             android:text="Kakao" />
 
     </LinearLayout>
