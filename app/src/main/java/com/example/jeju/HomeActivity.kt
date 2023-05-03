@@ -3,21 +3,31 @@ package com.example.jeju
 import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.viewpager2.widget.ViewPager2
 import com.example.jeju.databinding.ActivityHomeBinding
+import com.example.jeju.databinding.NavHomeBinding
+import com.example.jeju.fragment.*
 import com.google.android.material.navigation.NavigationView
 
 class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
     lateinit var binding: ActivityHomeBinding
+    lateinit var pager: NavHomeBinding
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var runnable: Runnable
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
+        pager = NavHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val toolbar: Toolbar = findViewById(R.id.main_layout_toolbar) // toolBar를 통해 App Bar 생성
@@ -34,11 +44,60 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         navigationView = findViewById(R.id.main_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
-        var fragmentList = listOf(HanraFragment(), OllehFragment())
+        setContentView(pager.root)
+
+        var fragmentList = listOf(
+            HanraFragment(), OllehFragment(), CheonjeyeonFragment(),
+            CheonjiyeonFragment(), JusangFragment(), SeongsanFragment())
 
         val adapter = ViewPagerAdapter(this)
         adapter.fragmentList = fragmentList
-        binding.viewPager.adapter = adapter
+        pager.viewPager.adapter = adapter
+
+        pager.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            var currentState = 0
+            var currentPos = 0
+
+            override fun onPageScrolled(
+                position: Int,
+                positionOffset: Float,
+                positionOffsetPixels: Int
+            ) {
+                if(currentState == ViewPager2.SCROLL_STATE_DRAGGING && currentPos == position) {
+                    if(currentPos == 0) pager.viewPager.currentItem = 5
+                    else if(currentPos == 5) pager.viewPager.currentItem = 0
+                }
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels)
+            }
+
+            override fun onPageSelected(position: Int) {
+                currentPos = position
+                super.onPageSelected(position)
+
+            }
+
+            override fun onPageScrollStateChanged(state: Int) {
+                currentState = state
+                super.onPageScrollStateChanged(state)
+                if (state == ViewPager2.SCROLL_STATE_IDLE) {
+                    handler.removeCallbacksAndMessages(null) // 모든 runnable, message 제거
+                    runnable = object : Runnable {
+                        override fun run() {
+                            val nextPos = (currentPos + 1) % fragmentList.size
+                            pager.viewPager.currentItem = nextPos
+                            handler.postDelayed(this, 3000)
+                        }
+                    }
+                    handler.postDelayed(runnable, 3000) // 3초마다 페이지 전환
+                } else if (state == ViewPager2.SCROLL_STATE_DRAGGING) {
+                    handler.removeCallbacksAndMessages(null) // 모든 runnable, message 제거
+                }
+            }
+        })
+        // 첫 페이지에서 자동 슬라이드가 동작하도록 호출
+        pager.viewPager.postDelayed({
+            pager.viewPager.currentItem = 1
+        }, 3000)
     }
 
     // 툴바 메뉴 버튼이 클릭 됐을 때 실행하는 함수

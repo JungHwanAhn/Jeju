@@ -7,20 +7,16 @@
     android:id="@+id/main_drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:fitsSystemWindows="true"
     tools:context=".HomeActivity">
 
     <!--메인 레이아웃-->
     <include
+        android:id="@+id/search"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         layout="@layout/nav_home" />
-
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
 
     <!--자식 레이아웃. Navigation Drawer-->
     <com.google.android.material.navigation.NavigationView
