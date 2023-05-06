@@ -17,24 +17,19 @@ class ForgotActivity : AppCompatActivity() {
         binding = ActivityForgotBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val signinText = findViewById<TextView>(R.id.signinText)
-        signinText.setOnClickListener {
+        binding.signinText.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
 
         val passwordModifyTextView = findViewById<TextView>(R.id.passwordModifyTextView)
-        val emailEditText = findViewById<EditText>(R.id.emailEditText)
-        val passwordEditText = findViewById<EditText>(R.id.passwordEditText)
-        val passwordCheckEditText = findViewById<EditText>(R.id.passwordCheckEditText)
-        val continueButton = findViewById<Button>(R.id.continueButton)
 
-        continueButton.setOnClickListener {
-            val email = emailEditText.text.toString()
-            val password = passwordEditText.text.toString()
-            val passwordCheck = passwordCheckEditText.text.toString()
+        binding.continueButton.setOnClickListener {
+            val email = binding.editTextEmail.text.toString()
+            val password = binding.editTextPassword.text.toString()
+            val passwordCheck = binding.passwordCheckEditText.text.toString()
 
-            if (email.isBlank() || password.isBlank() || passwordCheck.isBlank()) {
+            if (email.isNullOrBlank() || password.isNullOrBlank() || passwordCheck.isNullOrBlank()) {
                 Toast.makeText(this, "모든 정보를 입력해주세요.", Toast.LENGTH_SHORT).show()
             } else if (password != passwordCheck) {
                 Toast.makeText(this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show()
