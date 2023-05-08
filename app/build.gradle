@@ -3,6 +3,9 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
 android {
     namespace 'com.example.jeju'
     compileSdk 33
@@ -13,8 +16,10 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "NAVER_CLIENT_ID", properties["naver.id"]
+        buildConfigField "String", "NAVER_CLIENT_SECRET", properties["naver.key"]
+        manifestPlaceholders["KAKAO_MAP_KEY"] = properties["kakao.key"]
     }
 
     buildTypes {
@@ -51,11 +56,14 @@ dependencies {
     implementation fileTree(includes: ['*.jar'], dir: 'libs')
     implementation files('libs/libDaumMapAndroid.jar')
 
-    //Material Design
     implementation 'com.google.android.material:material:1.2.0-alpha02'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0' // DrawerLayout
     implementation 'com.google.android.material:material:1.0.0' // NavigationView
 
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
+    implementation 'com.android.volley:volley:1.2.1'
+
+    implementation 'com.navercorp.nid:oauth:5.5.0'
+
 }

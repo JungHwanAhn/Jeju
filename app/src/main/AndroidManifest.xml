@@ -48,7 +48,7 @@
 
         <meta-data
             android:name="com.kakao.sdk.AppKey"
-            android:value="2332204b0292027999d5be3df1893ddd"/>
+            android:value="${KAKAO_MAP_KEY}"/>
 
     </application>
 
