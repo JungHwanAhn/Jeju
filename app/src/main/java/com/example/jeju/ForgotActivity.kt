@@ -11,7 +11,6 @@ import com.example.jeju.databinding.ActivityForgotBinding
 
 class ForgotActivity : AppCompatActivity() {
     private lateinit var binding: ActivityForgotBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityForgotBinding.inflate(layoutInflater)

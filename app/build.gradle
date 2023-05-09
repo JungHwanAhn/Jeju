@@ -19,7 +19,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "NAVER_CLIENT_ID", properties["naver.id"]
         buildConfigField "String", "NAVER_CLIENT_SECRET", properties["naver.key"]
-        manifestPlaceholders["KAKAO_MAP_KEY"] = properties["kakao.key"]
+        buildConfigField "String", "KAKAO_LOGIN_KEY", properties["kakaologin.key"]
     }
 
     buildTypes {
@@ -65,5 +65,7 @@ dependencies {
     implementation 'com.android.volley:volley:1.2.1'
 
     implementation 'com.navercorp.nid:oauth:5.5.0'
+
+    implementation "com.kakao.sdk:v2-all:2.13.0"
 
 }

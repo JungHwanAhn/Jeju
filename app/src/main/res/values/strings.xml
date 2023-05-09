@@ -2,4 +2,6 @@
     <string name="app_name">Jeju</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="kakao_redirect_key">kakaodcdc43d481e3da8e014cd38d425f9e8a</string>
+    <string name="kakao_login_key">dcdc43d481e3da8e014cd38d425f9e8a</string>
 </resources>

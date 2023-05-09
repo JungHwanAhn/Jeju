@@ -6,14 +6,21 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.viewpager2.widget.ViewPager2
+import com.android.volley.RequestQueue
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.jeju.databinding.ActivityHomeBinding
 import com.example.jeju.fragment.*
 import com.google.android.material.navigation.NavigationView
+import com.kakao.sdk.user.UserApiClient
+import org.json.JSONObject
 
 class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     var backPressedTime : Long = 0
@@ -22,10 +29,12 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     lateinit var binding: ActivityHomeBinding
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var runnable: Runnable
+    private lateinit var requestQueue: RequestQueue
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
+        requestQueue = Volley.newRequestQueue(this)
         setContentView(binding.root)
 
         val toolbar: Toolbar = findViewById(R.id.main_layout_toolbar) // toolBar를 통해 App Bar 생성
@@ -124,9 +133,47 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             R.id.map-> Toast.makeText(this,"menu_item2 실행",Toast.LENGTH_SHORT).show()
             R.id.like-> Toast.makeText(this,"menu_item3 실행",Toast.LENGTH_SHORT).show()
             R.id.logout-> {
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
+                val url = "http://49.142.162.247:8050/oauth/logout"
+                val logoutData: Map<String, String?> = hashMapOf(
+                    "logout" to intent.getStringExtra("login")
+                )
+                Log.e("MainActivity", "${intent.getStringExtra("login")}")
+
+                val requestBody = JSONObject(logoutData).toString()
+
+                val logoutRequest = object : StringRequest(
+                    Method.POST,
+                    url,
+                    Response.Listener<String> { response ->
+                        // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                        if (response == "success") {
+                            // 로그아웃에 성공한 경우 처리할 코드를 작성합니다.
+                            Toast.makeText(this@HomeActivity, "로그아웃하였습니다.", Toast.LENGTH_SHORT).show()
+                            Log.e("HomeActivity", "로그아웃 성공!")
+                            val intent = Intent(this@HomeActivity, MainActivity::class.java)
+                            startActivity(intent)
+                            finish() // 현재 액티비티를 종료합니다.
+                        } else {
+                            // 로그아웃에 실패한 경우 처리할 코드를 작성합니다.
+                            Toast.makeText(this@HomeActivity, "로그아웃에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                            Log.e("HomeActivity", "로그아웃 실패!")
+                        }
+                    },
+                    Response.ErrorListener { error ->
+                        // 요청 실패 시 수행되는 코드를 작성합니다.
+                        Log.e("HomeActivity", "로그아웃 요청 실패!", error)
+                        Toast.makeText(this@HomeActivity, "로그아웃 요청이 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    override fun getBodyContentType(): String {
+                        return "application/json; charset=utf-8"
+                    }
+
+                    override fun getBody(): ByteArray {
+                        return requestBody.toByteArray(Charsets.UTF_8)
+                    }
+                }
+                requestQueue.add(logoutRequest)
             }
         }
         return false
