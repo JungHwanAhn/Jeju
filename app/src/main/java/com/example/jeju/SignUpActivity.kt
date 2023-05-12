@@ -20,7 +20,7 @@ class SignUpActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignupBinding
     private lateinit var requestQueue: RequestQueue
 
-    private val url = "http://49.142.162.247:8050/signUp"
+    private val url = "http://49.142.162.247:8050/join"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySignupBinding.inflate(layoutInflater)

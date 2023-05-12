@@ -12,14 +12,17 @@ import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.viewpager2.widget.ViewPager2
+import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
+import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.jeju.databinding.ActivityHomeBinding
+import com.example.jeju.databinding.ActivitySearchBinding
 import com.example.jeju.fragment.*
 import com.google.android.material.navigation.NavigationView
-import com.kakao.sdk.user.UserApiClient
+import org.json.JSONException
 import org.json.JSONObject
 
 class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -27,6 +30,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
     lateinit var binding: ActivityHomeBinding
+    lateinit var binding2: ActivitySearchBinding
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var runnable: Runnable
     private lateinit var requestQueue: RequestQueue
@@ -34,6 +38,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
+        binding2 = ActivitySearchBinding.inflate(layoutInflater)
         requestQueue = Volley.newRequestQueue(this)
         setContentView(binding.root)
 
@@ -51,13 +56,43 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         navigationView = findViewById(R.id.main_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
-        var fragmentList = listOf(
-            HanraFragment(), OllehFragment(), CheonjeyeonFragment(),
-            CheonjiyeonFragment(), JusangFragment(), SeongsanFragment())
 
+        val url = "http://49.142.162.247:8050/main"
         val adapter = ViewPagerAdapter(this)
-        adapter.fragmentList = fragmentList
-        binding.viewPager.adapter = adapter
+
+        val request = JsonArrayRequest(Request.Method.GET, url, null,
+            { response ->
+                // 서버 응답을 처리하는 코드
+                try {
+                    // JSONArray에서 title 값과 imageUrl 값을 추출하는 코드
+                    val fragmentList = mutableListOf<FragmentData>()
+                    for (i in 0 until response.length()) {
+                        val title = response.getJSONObject(i).getString("title")
+                        val imageUrl = response.getJSONObject(i).getString("imageurl")
+                        val fragment = when (i) {
+                            0 -> FirstFragment()
+                            1 -> SecondFragment()
+                            2 -> ThirdFragment()
+                            3 -> FourthFragment()
+                            4 -> FifthFragment()
+                            else -> throw IndexOutOfBoundsException("Fragment index out of bounds: $i")
+                        }
+                        fragmentList.add(FragmentData(fragment, title, imageUrl))
+                    }
+
+                    adapter.fragmentList = fragmentList
+                    binding.viewPager.adapter = adapter
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+            },
+            { error ->
+                // 요청 실패 시 수행되는 코드
+                Log.e("MainActivity", "데이터 가져오기 실패!", error)
+                Toast.makeText(this@HomeActivity, "데이터 가져오기 실패", Toast.LENGTH_SHORT).show()
+            }
+        )
+        requestQueue.add(request)
 
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             var currentState = 0
@@ -88,7 +123,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                     handler.removeCallbacksAndMessages(null) // 모든 runnable, message 제거
                     runnable = object : Runnable {
                         override fun run() {
-                            val nextPos = (currentPos + 1) % fragmentList.size
+                            val nextPos = (currentPos + 1) % 5
                             binding.viewPager.currentItem = nextPos
                             handler.postDelayed(this, 3000)
                         }
@@ -105,7 +140,9 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         }, 3000)
 
         binding.searchBtn.setOnClickListener {
-            val intent = Intent(this, ResultActivity::class.java)
+            val searchTerm = binding.searchEdit.text.toString()
+            val intent = Intent(this, SearchActivity::class.java)
+            intent.putExtra("result", searchTerm)
             startActivity(intent)
         }
     }
@@ -129,8 +166,13 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             R.id.home-> {
                 val intent = Intent(this, HomeActivity::class.java)
                 startActivity(intent)
+                finish()
             }
-            R.id.map-> Toast.makeText(this,"menu_item2 실행",Toast.LENGTH_SHORT).show()
+            R.id.map-> {
+                val intent = Intent(this, MapActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
             R.id.like-> Toast.makeText(this,"menu_item3 실행",Toast.LENGTH_SHORT).show()
             R.id.logout-> {
                 val url = "http://49.142.162.247:8050/oauth/logout"

@@ -21,8 +21,6 @@ class ForgotActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        val passwordModifyTextView = findViewById<TextView>(R.id.passwordModifyTextView)
-
         binding.continueButton.setOnClickListener {
             val email = binding.editTextEmail.text.toString()
             val password = binding.editTextPassword.text.toString()

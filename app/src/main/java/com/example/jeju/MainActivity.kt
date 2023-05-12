@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
             val email = binding.emailEditText.text.toString()
             val password = binding.passwordEditText.text.toString()
 
-            val url = "http://49.142.162.247:8050/login"
+            val url = "http://49.142.162.247:8050/login2"
 
             val signinData: Map<String, String> = hashMapOf(
                 "email" to email,
@@ -65,18 +65,18 @@ class MainActivity : AppCompatActivity() {
                     Response.Listener<String>
                     { response ->
                         // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
-                        if (response == "success") {
+                        if (response == "fail") {
+                            // 회원가입에 실패한 경우 처리할 코드를 작성합니다.
+                            Toast.makeText(this, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                            Log.e("MainActivity", "로그인 실패!")
+                        } else {
                             // 회원가입에 성공한 경우 처리할 코드를 작성합니다.
                             Toast.makeText(this, "로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show()
                             Log.e("MainActivity", "로그인 성공!")
                             val intent = Intent(this, HomeActivity::class.java)
-                            intent.putExtra("login", "login")
+                            intent.putExtra("login", response)
                             startActivity(intent)
                             finish() // 현재 액티비티를 종료합니다.
-                        } else {
-                            // 회원가입에 실패한 경우 처리할 코드를 작성합니다.
-                            Toast.makeText(this, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
-                            Log.e("MainActivity", "로그인 실패!")
                         }
                     },
                     Response.ErrorListener { error ->
@@ -130,18 +130,18 @@ class MainActivity : AppCompatActivity() {
                         url,
                         Response.Listener<String> { response ->
                             // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
-                            if (response == "success") {
+                            if (response == "fail") {
+                                // 로그인에 실패한 경우 처리할 코드를 작성합니다.
+                                Toast.makeText(this@MainActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                                Log.e("MainActivity", "로그인 실패!")
+                            } else {
                                 // 로그인에 성공한 경우 처리할 코드를 작성합니다.
                                 Toast.makeText(this@MainActivity, "로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show()
                                 Log.e("MainActivity", "로그인 성공!")
                                 val intent = Intent(this@MainActivity, HomeActivity::class.java)
-                                intent.putExtra("login", "naver")
+                                intent.putExtra("login", response)
                                 startActivity(intent)
                                 finish() // 현재 액티비티를 종료합니다.
-                            } else {
-                                // 로그인에 실패한 경우 처리할 코드를 작성합니다.
-                                Toast.makeText(this@MainActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
-                                Log.e("MainActivity", "로그인 실패!")
                             }
                         },
                         Response.ErrorListener { error ->
@@ -213,18 +213,18 @@ class MainActivity : AppCompatActivity() {
                             url,
                             Response.Listener<String> { response ->
                                 // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
-                                if (response == "success") {
+                                if (response == "fail") {
+                                    // 로그인에 실패한 경우 처리할 코드를 작성합니다.
+                                    Toast.makeText(this@MainActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                                    Log.e("MainActivity", "로그인 실패!")
+                                } else {
                                     // 로그인에 성공한 경우 처리할 코드를 작성합니다.
                                     Toast.makeText(this@MainActivity, "로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show()
                                     Log.e("MainActivity", "로그인 성공!")
                                     val intent = Intent(this@MainActivity, HomeActivity::class.java)
-                                    intent.putExtra("login", "kakao")
+                                    intent.putExtra("login", response)
                                     startActivity(intent)
                                     finish() // 현재 액티비티를 종료합니다.
-                                } else {
-                                    // 로그인에 실패한 경우 처리할 코드를 작성합니다.
-                                    Toast.makeText(this@MainActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
-                                    Log.e("MainActivity", "로그인 실패!")
                                 }
                             },
                             Response.ErrorListener { error ->

@@ -4,21 +4,32 @@ import android.content.Intent
 import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import com.example.jeju.databinding.ActivityResultBinding
+import androidx.recyclerview.widget.RecyclerView
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonArrayRequest
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
+import com.example.jeju.databinding.ActivitySearchBinding
 import com.google.android.material.navigation.NavigationView
+import org.json.JSONArray
+import org.json.JSONObject
 
-class ResultActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
-    lateinit var binding: ActivityResultBinding
+    lateinit var binding: ActivitySearchBinding
+    private lateinit var resultList: RecyclerView
+    private lateinit var resultAdapter: SearchAdapter
+    private val results = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityResultBinding.inflate(layoutInflater)
+        binding = ActivitySearchBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val toolbar: Toolbar = findViewById(R.id.main_layout_toolbar) // toolBar를 통해 App Bar 생성
@@ -35,6 +46,37 @@ class ResultActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         navigationView = findViewById(R.id.result_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
+        // 검색어 가져오기
+        val searchTerm = intent.getStringExtra("result").toString()
+        val resultAdapter = SearchAdapter(results)
+        binding.resultList.adapter = resultAdapter
+
+        val url = "http://49.142.162.247:8050/search/title"
+        val queue = Volley.newRequestQueue(this)
+
+        val jsonRequest = JSONArray().apply {
+            put(JSONObject().apply {
+                put("title", searchTerm)
+            })
+        }
+
+        val request = JsonArrayRequest(
+            Request.Method.POST, url, jsonRequest,
+            { response ->
+                // 결과 받아서 처리
+                for (i in 0 until response.length()) {
+                    val title = response.getJSONObject(i).getString("title")
+                    Log.d("SearchActivity", title)
+                    results.add(title)
+                }
+                resultAdapter.notifyDataSetChanged()
+            },
+            { error ->
+                // 에러 처리
+                Toast.makeText(this, "검색결과 요청 실패!", Toast.LENGTH_SHORT).show()
+                Log.e("SearchActivity", "검색결과 요청 실패!", error)
+            })
+        queue.add(request)
     }
 
     // 툴바 메뉴 버튼이 클릭 됐을 때 실행하는 함수
