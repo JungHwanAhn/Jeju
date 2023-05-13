@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.MenuItem
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -19,7 +20,7 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.jeju.databinding.ActivityHomeBinding
-import com.example.jeju.databinding.ActivitySearchBinding
+import com.example.jeju.databinding.NavHeaderBinding
 import com.example.jeju.fragment.*
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONException
@@ -30,7 +31,6 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
     lateinit var binding: ActivityHomeBinding
-    lateinit var binding2: ActivitySearchBinding
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var runnable: Runnable
     private lateinit var requestQueue: RequestQueue
@@ -38,7 +38,6 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
-        binding2 = ActivitySearchBinding.inflate(layoutInflater)
         requestQueue = Volley.newRequestQueue(this)
         setContentView(binding.root)
 
@@ -56,6 +55,9 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         navigationView = findViewById(R.id.main_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
+        val headerBinding = NavHeaderBinding.bind(navigationView.getHeaderView(0))
+        val userEmail = intent.getStringExtra("email")
+        headerBinding.userEmail.text = userEmail
 
         val url = "http://49.142.162.247:8050/main"
         val adapter = ViewPagerAdapter(this)
@@ -68,6 +70,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                     val fragmentList = mutableListOf<FragmentData>()
                     for (i in 0 until response.length()) {
                         val title = response.getJSONObject(i).getString("title")
+                        val address = response.getJSONObject(i).getString("roadaddress")
                         val imageUrl = response.getJSONObject(i).getString("imageurl")
                         val fragment = when (i) {
                             0 -> FirstFragment()
@@ -77,7 +80,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                             4 -> FifthFragment()
                             else -> throw IndexOutOfBoundsException("Fragment index out of bounds: $i")
                         }
-                        fragmentList.add(FragmentData(fragment, title, imageUrl))
+                        fragmentList.add(FragmentData(fragment, title, address, imageUrl))
                     }
 
                     adapter.fragmentList = fragmentList
@@ -149,11 +152,9 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
 
     // 툴바 메뉴 버튼이 클릭 됐을 때 실행하는 함수
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
         // 클릭한 툴바 메뉴 아이템 id 마다 다르게 실행하도록 설정
         when(item!!.itemId){
-            android.R.id.home->{
-                // 햄버거 버튼 클릭시 네비게이션 드로어 열기
+            android.R.id.home -> {
                 drawerLayout.openDrawer(GravityCompat.START)
             }
         }
@@ -171,7 +172,6 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             R.id.map-> {
                 val intent = Intent(this, MapActivity::class.java)
                 startActivity(intent)
-                finish()
             }
             R.id.like-> Toast.makeText(this,"menu_item3 실행",Toast.LENGTH_SHORT).show()
             R.id.logout-> {

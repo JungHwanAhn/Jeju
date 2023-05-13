@@ -57,7 +57,6 @@ class SignUpActivity : AppCompatActivity() {
                 Toast.makeText(this, "약관에 동의해주세요.", Toast.LENGTH_SHORT).show()
             } else {
                 // 이메일과 비밀번호를 사용하여 로그인 처리
-                Toast.makeText(this, "회원가입이 완료되었습니다.", Toast.LENGTH_SHORT).show()
                 val signUpRequest = object : StringRequest(
                     Method.POST, // 요청 방식을 POST로 지정합니다.
                     url, // 요청을 보낼 URL 주소를 지정합니다.

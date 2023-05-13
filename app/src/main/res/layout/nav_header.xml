@@ -15,14 +15,8 @@
         android:src="@drawable/ic_account"/>
 
     <TextView
+        android:id="@+id/user_email"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
-        android:text="Ahn Jung Hwan"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="15sp"
-        android:text="user@email.com"/>
+        android:textSize="15sp"/>
 </LinearLayout>

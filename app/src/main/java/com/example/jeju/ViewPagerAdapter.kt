@@ -16,15 +16,17 @@ class ViewPagerAdapter(fragmentActivity: FragmentActivity) :
     override fun createFragment(position: Int): Fragment {
         val fragmentData = fragmentList[position]
         val fragment = fragmentData.fragment
-        val content = fragmentData.content
+        val title = fragmentData.title
+        val address = fragmentData.address
         val imageUrl = fragmentData.imageUrl
 
         val bundle = Bundle()
-        bundle.putString("content", content)
+        bundle.putString("title", title)
+        bundle.putString("address", address)
         bundle.putString("imageUrl", imageUrl)
         fragment.arguments = bundle
 
         return fragment
     }
 }
-class FragmentData(val fragment: Fragment, val content: String, val imageUrl: String?)
+class FragmentData(val fragment: Fragment, val title: String, val address: String, val imageUrl: String?)

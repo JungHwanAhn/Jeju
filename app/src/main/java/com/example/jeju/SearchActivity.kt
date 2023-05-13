@@ -6,13 +6,13 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.jeju.databinding.ActivitySearchBinding
 import com.google.android.material.navigation.NavigationView
@@ -23,9 +23,10 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
     lateinit var binding: ActivitySearchBinding
-    private lateinit var resultList: RecyclerView
+    private lateinit var resultRecyclerView: RecyclerView
     private lateinit var resultAdapter: SearchAdapter
-    private val results = ArrayList<String>()
+    private lateinit var results: MutableList<String>
+    private var searchTerm: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,10 +47,22 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         navigationView = findViewById(R.id.result_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
-        // 검색어 가져오기
-        val searchTerm = intent.getStringExtra("result").toString()
-        val resultAdapter = SearchAdapter(results)
-        binding.resultList.adapter = resultAdapter
+        searchTerm = intent.getStringExtra("result").toString()
+        search(searchTerm!!)
+
+        binding.searchBtn.setOnClickListener {
+            searchTerm = binding.searchEdit.text.toString()
+            search(searchTerm!!)
+        }
+
+    }
+
+    // 검색어 가져오기
+    private fun search(searchTerm: String) {
+        results = mutableListOf()
+        resultRecyclerView = findViewById(R.id.result_list)
+        resultAdapter = SearchAdapter(this, results)
+        resultRecyclerView.adapter = resultAdapter
 
         val url = "http://49.142.162.247:8050/search/title"
         val queue = Volley.newRequestQueue(this)

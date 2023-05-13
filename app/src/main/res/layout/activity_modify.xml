@@ -30,11 +30,53 @@
         android:maxLines="1"
         android:layout_marginBottom="16dp"/>
 
-    <Button
-        android:id="@+id/sendButton"
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/red"
+        android:text="Password"/>
+
+    <EditText
+        android:id="@+id/passwordEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Send Mail"
+        android:inputType="textPassword"
+        android:maxLines="1"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/red"
+        android:text="New Password"/>
+
+    <EditText
+        android:id="@+id/newPasswordEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:maxLines="1"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/red"
+        android:text="Check Password"/>
+
+    <EditText
+        android:id="@+id/checkPasswordEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:maxLines="1"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/continueButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Continue"
         android:backgroundTint="@color/orange"
         android:layout_marginBottom="16dp"/>
 

@@ -18,6 +18,9 @@ import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
 import com.kakao.sdk.common.model.ClientError
+import com.navercorp.nid.oauth.NidOAuthLogin
+import com.navercorp.nid.profile.NidProfileCallback
+import com.navercorp.nid.profile.data.NidProfileResponse
 
 private const val kakao_key = BuildConfig.KAKAO_LOGIN_KEY
 class MainActivity : AppCompatActivity() {
@@ -28,8 +31,6 @@ class MainActivity : AppCompatActivity() {
 
     val naver_key = BuildConfig.NAVER_CLIENT_SECRET
     val naver_id = BuildConfig.NAVER_CLIENT_ID
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -67,7 +68,7 @@ class MainActivity : AppCompatActivity() {
                         // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
                         if (response == "fail") {
                             // 회원가입에 실패한 경우 처리할 코드를 작성합니다.
-                            Toast.makeText(this, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "이메일, 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show()
                             Log.e("MainActivity", "로그인 실패!")
                         } else {
                             // 회원가입에 성공한 경우 처리할 코드를 작성합니다.
@@ -75,6 +76,7 @@ class MainActivity : AppCompatActivity() {
                             Log.e("MainActivity", "로그인 성공!")
                             val intent = Intent(this, HomeActivity::class.java)
                             intent.putExtra("login", response)
+                            intent.putExtra("email", email)
                             startActivity(intent)
                             finish() // 현재 액티비티를 종료합니다.
                         }
@@ -115,6 +117,7 @@ class MainActivity : AppCompatActivity() {
                     // 네이버 로그인 인증이 성공했을 때 수행할 코드 추가
                     val tvAccessToken = NaverIdLoginSDK.getAccessToken()
                     val tvRefreshToken = NaverIdLoginSDK.getRefreshToken()
+
                     val url = "http://49.142.162.247:8050/oauth/naver"
 
                     Log.d("NaverLogin", "accessToken : $tvAccessToken, refreshToken : $tvRefreshToken")
@@ -139,9 +142,24 @@ class MainActivity : AppCompatActivity() {
                                 Toast.makeText(this@MainActivity, "로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show()
                                 Log.e("MainActivity", "로그인 성공!")
                                 val intent = Intent(this@MainActivity, HomeActivity::class.java)
-                                intent.putExtra("login", response)
-                                startActivity(intent)
-                                finish() // 현재 액티비티를 종료합니다.
+
+                                // 네이버 로그인 API 호출 성공 시 유저 정보를 가져온다
+                                NidOAuthLogin().callProfileApi(object : NidProfileCallback<NidProfileResponse> {
+                                    override fun onSuccess(result: NidProfileResponse) {
+                                        intent.putExtra("email", result.profile?.email.toString())
+                                        intent.putExtra("login", response)
+                                        startActivity(intent)
+                                        finish() // 현재 액티비티를 종료합니다.
+                                    }
+
+                                    override fun onError(errorCode: Int, message: String) {
+                                        //
+                                    }
+
+                                    override fun onFailure(httpStatus: Int, message: String) {
+                                        //
+                                    }
+                                })
                             }
                         },
                         Response.ErrorListener { error ->
@@ -222,9 +240,17 @@ class MainActivity : AppCompatActivity() {
                                     Toast.makeText(this@MainActivity, "로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show()
                                     Log.e("MainActivity", "로그인 성공!")
                                     val intent = Intent(this@MainActivity, HomeActivity::class.java)
-                                    intent.putExtra("login", response)
-                                    startActivity(intent)
-                                    finish() // 현재 액티비티를 종료합니다.
+                                    UserApiClient.instance.me { user, error ->
+                                        if (error != null) {
+                                            Log.e("MainActivity", "사용자 정보 요청 실패", error)
+                                        }
+                                        else if (user != null) {
+                                            intent.putExtra("login", response)
+                                            intent.putExtra("email", user.kakaoAccount?.email)
+                                            startActivity(intent)
+                                            finish() // 현재 액티비티를 종료합니다.
+                                        }
+                                    }
                                 }
                             },
                             Response.ErrorListener { error ->
