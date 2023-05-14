@@ -1,35 +1,40 @@
 package com.example.jeju
 
 import android.content.Intent
-import androidx.appcompat.widget.Toolbar
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
+import com.example.jeju.databinding.ActivityLikeBinding
 import com.example.jeju.databinding.ActivitySearchBinding
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
 
-class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+data class Item(
+    val image: String,
+    val title: String,
+    val address: String
+)
+
+class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
-    lateinit var binding: ActivitySearchBinding
-    private lateinit var resultRecyclerView: RecyclerView
-    private lateinit var resultAdapter: SearchAdapter
-    private lateinit var results: MutableList<String>
-    private var searchTerm: String? = null
+    lateinit var binding: ActivityLikeBinding
+    private lateinit var likeRecyclerView: RecyclerView
+    private lateinit var likeAdapter: LikeAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySearchBinding.inflate(layoutInflater)
+        binding = ActivityLikeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val toolbar: Toolbar = findViewById(R.id.main_layout_toolbar) // toolBar를 통해 App Bar 생성
@@ -46,43 +51,30 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         navigationView = findViewById(R.id.result_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
-        searchTerm = intent.getStringExtra("result").toString()
-        search(searchTerm!!)
-
-        binding.searchBtn.setOnClickListener {
-            searchTerm = binding.searchEdit.text.toString()
-            search(searchTerm!!)
-
-        }
-
-    }
-
-    // 검색어 가져오기
-    private fun search(searchTerm: String) {
-        results = mutableListOf()
-        resultRecyclerView = findViewById(R.id.result_list)
-        resultAdapter = SearchAdapter(this, results, intent.getStringExtra("email").toString())
-        resultRecyclerView.adapter = resultAdapter
-
-        val url = "http://49.142.162.247:8050/search/title"
+        val url = "http://49.142.162.247:8050/interest/return"
         val queue = Volley.newRequestQueue(this)
 
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
-                put("title", searchTerm)
+                put("email", intent.getStringExtra("email"))
             })
         }
 
+        val itemList = mutableListOf<Item>()
         val request = JsonArrayRequest(
             Request.Method.POST, url, jsonRequest,
             { response ->
                 // 결과 받아서 처리
                 for (i in 0 until response.length()) {
+                    val image = response.getJSONObject(i).getString("imageurl")
                     val title = response.getJSONObject(i).getString("title")
-                    Log.d("SearchActivity", title)
-                    results.add(title)
+                    val address = response.getJSONObject(i).getString("roadaddress")
+                    Log.d("LikeActivity", title)
+                    Log.d("LikeActivity", address)
+                    val item = Item(image, title, address)
+                    itemList.add(item)
                 }
-                resultAdapter.notifyDataSetChanged()
+                likeAdapter.notifyDataSetChanged()
             },
             { error ->
                 // 에러 처리
@@ -90,6 +82,10 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                 Log.e("SearchActivity", "검색결과 요청 실패!", error)
             })
         queue.add(request)
+
+        likeRecyclerView = findViewById(R.id.like_list)
+        likeAdapter = LikeAdapter(itemList)
+        likeRecyclerView.adapter = likeAdapter
     }
 
     // 툴바 메뉴 버튼이 클릭 됐을 때 실행하는 함수
@@ -111,9 +107,16 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
             R.id.home-> {
                 val intent = Intent(this, HomeActivity::class.java)
                 startActivity(intent)
+                finish()
             }
-            R.id.map-> Toast.makeText(this,"menu_item2 실행",Toast.LENGTH_SHORT).show()
-            R.id.like-> Toast.makeText(this,"menu_item3 실행",Toast.LENGTH_SHORT).show()
+            R.id.map-> {
+                val intent = Intent(this, MapActivity::class.java)
+                startActivity(intent)
+            }
+            R.id.like-> {
+                val intent = Intent(this, LikeActivity::class.java)
+                startActivity(intent)
+            }
             R.id.logout-> {
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)

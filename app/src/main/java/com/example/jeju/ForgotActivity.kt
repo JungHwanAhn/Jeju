@@ -39,7 +39,6 @@ class ForgotActivity : AppCompatActivity() {
             if (email.isNullOrBlank()){
                 Toast.makeText(this, "이메일을 입력해주세요.", Toast.LENGTH_SHORT).show()
             } else {
-                Log.e("error", "response")
                 val forgotRequest = object : StringRequest(
                     Method.POST, // 요청 방식을 POST로 지정합니다.
                     url, // 요청을 보낼 URL 주소를 지정합니다.

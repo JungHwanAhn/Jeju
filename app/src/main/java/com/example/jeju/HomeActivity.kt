@@ -146,6 +146,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             val searchTerm = binding.searchEdit.text.toString()
             val intent = Intent(this, SearchActivity::class.java)
             intent.putExtra("result", searchTerm)
+            intent.putExtra("email", userEmail)
             startActivity(intent)
         }
     }
@@ -173,7 +174,12 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                 val intent = Intent(this, MapActivity::class.java)
                 startActivity(intent)
             }
-            R.id.like-> Toast.makeText(this,"menu_item3 실행",Toast.LENGTH_SHORT).show()
+            R.id.like-> {
+                val intent = Intent(this, LikeActivity::class.java)
+                val userEmail = intent.getStringExtra("email")
+                intent.putExtra("email", userEmail)
+                startActivity(intent)
+            }
             R.id.logout-> {
                 val url = "http://49.142.162.247:8050/oauth/logout"
                 val logoutData: Map<String, String?> = hashMapOf(
