@@ -34,7 +34,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var runnable: Runnable
     private lateinit var requestQueue: RequestQueue
-
+    var userEmail : String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -56,7 +56,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
         val headerBinding = NavHeaderBinding.bind(navigationView.getHeaderView(0))
-        val userEmail = intent.getStringExtra("email")
+        userEmail = intent.getStringExtra("email")
         headerBinding.userEmail.text = userEmail
 
         val url = "http://49.142.162.247:8050/main"
@@ -71,7 +71,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                     for (i in 0 until response.length()) {
                         val title = response.getJSONObject(i).getString("title")
                         val address = response.getJSONObject(i).getString("roadaddress")
-                        val imageUrl = response.getJSONObject(i).getString("imageurl")
+                        val imageUrl = response.getJSONObject(i).getString("imagepath")
                         val fragment = when (i) {
                             0 -> FirstFragment()
                             1 -> SecondFragment()
@@ -176,7 +176,6 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             }
             R.id.like-> {
                 val intent = Intent(this, LikeActivity::class.java)
-                val userEmail = intent.getStringExtra("email")
                 intent.putExtra("email", userEmail)
                 startActivity(intent)
             }

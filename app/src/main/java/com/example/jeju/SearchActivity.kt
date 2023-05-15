@@ -17,15 +17,19 @@ import com.example.jeju.databinding.ActivitySearchBinding
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
-
+data class Result(
+    val title: String,
+    val tourId: String,
+    val like: String
+)
 class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
     lateinit var binding: ActivitySearchBinding
     private lateinit var resultRecyclerView: RecyclerView
     private lateinit var resultAdapter: SearchAdapter
-    private lateinit var results: MutableList<String>
     private var searchTerm: String? = null
+    private var email: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,28 +51,25 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
         searchTerm = intent.getStringExtra("result").toString()
-        search(searchTerm!!)
+        email = intent.getStringExtra("email").toString()
+        search(searchTerm!!, email!!)
 
         binding.searchBtn.setOnClickListener {
             searchTerm = binding.searchEdit.text.toString()
-            search(searchTerm!!)
-
+            search(searchTerm!!, email!!)
         }
 
     }
 
     // 검색어 가져오기
-    private fun search(searchTerm: String) {
-        results = mutableListOf()
-        resultRecyclerView = findViewById(R.id.result_list)
-        resultAdapter = SearchAdapter(this, results, intent.getStringExtra("email").toString())
-        resultRecyclerView.adapter = resultAdapter
-
+    private fun search(searchTerm: String, email: String) {
+        val results = mutableListOf<Result>()
         val url = "http://49.142.162.247:8050/search/title"
         val queue = Volley.newRequestQueue(this)
 
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
+                put("email", email)
                 put("title", searchTerm)
             })
         }
@@ -79,8 +80,13 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                 // 결과 받아서 처리
                 for (i in 0 until response.length()) {
                     val title = response.getJSONObject(i).getString("title")
+                    val tourId = response.getJSONObject(i).getString("tourId")
+                    val like = response.getJSONObject(i).getString("interested")
                     Log.d("SearchActivity", title)
-                    results.add(title)
+                    Log.d("SearchActivity", tourId)
+                    Log.d("SearchActivity", like)
+                    val result = Result(title, tourId, like)
+                    results.add(result)
                 }
                 resultAdapter.notifyDataSetChanged()
             },
@@ -90,6 +96,10 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                 Log.e("SearchActivity", "검색결과 요청 실패!", error)
             })
         queue.add(request)
+
+        resultRecyclerView = findViewById(R.id.result_list)
+        resultAdapter = SearchAdapter(this, results, intent.getStringExtra("email").toString())
+        resultRecyclerView.adapter = resultAdapter
     }
 
     // 툴바 메뉴 버튼이 클릭 됐을 때 실행하는 함수

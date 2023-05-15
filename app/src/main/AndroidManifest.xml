@@ -41,6 +41,10 @@
             android:exported="true"/>
 
         <activity
+            android:name=".LikeActivity"
+            android:exported="true"/>
+
+        <activity
             android:name=".MainActivity"
             android:exported="true">
 

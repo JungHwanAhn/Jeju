@@ -4,6 +4,8 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.ProgressBar
 import android.widget.Toast
 import com.android.volley.AuthFailureError
 import com.android.volley.RequestQueue
@@ -16,11 +18,14 @@ import org.json.JSONObject
 class ForgotActivity : AppCompatActivity() {
     private lateinit var binding: ActivityForgotBinding
     private lateinit var requestQueue: RequestQueue
+    private lateinit var progressBar: ProgressBar
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityForgotBinding.inflate(layoutInflater)
         requestQueue = Volley.newRequestQueue(this)
         setContentView(binding.root)
+
+        progressBar = findViewById(R.id.loadingProgressBar)
 
         binding.signinText.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
@@ -46,20 +51,24 @@ class ForgotActivity : AppCompatActivity() {
                     { response ->
                         // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
                         if (response == "success") {
+                            progressBar.visibility = View.GONE
                             Toast.makeText(this, "메일로 임시 비밀번호를 발급하였습니다.", Toast.LENGTH_SHORT).show()
                             Log.e("ForgotActivity", "메일 전송!")
                             val intent = Intent(this, ModifyActivity::class.java)
                             startActivity(intent)
                             finish()
                         } else if (response == "fail1"){
+                            progressBar.visibility = View.GONE
                             Toast.makeText(this, "가입되지 않은 이메일입니다.", Toast.LENGTH_SHORT).show()
                             Log.e("ForgotActivity", "가입되지 않은 이메일")
                         }
                         else if (response == "fail2"){
+                            progressBar.visibility = View.GONE
                             Toast.makeText(this, "메일이 이미 발송되었습니다.", Toast.LENGTH_SHORT).show()
                             Log.e("ForgotActivity", "중복 요청")
                         }
                         else {
+                            progressBar.visibility = View.GONE
                             Toast.makeText(this, "메일 요청 실패", Toast.LENGTH_SHORT).show()
                             Log.e("ForgotActivity", "메일 요청 실패")
                         }
@@ -77,6 +86,7 @@ class ForgotActivity : AppCompatActivity() {
                         return requestBody.toByteArray(Charsets.UTF_8)
                     }
                 }
+                progressBar.visibility = View.VISIBLE
                 // 생성한 Request 객체를 RequestQueue에 추가합니다.
                 requestQueue.add(forgotRequest)
             }

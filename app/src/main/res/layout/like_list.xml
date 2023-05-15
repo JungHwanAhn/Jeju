@@ -1,41 +1,64 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:background="@color/white"
+    android:padding="10dp">
 
     <ImageView
         android:id="@+id/like_image_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:layout_weight="1"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:adjustViewBounds="true"
+        android:scaleType="centerCrop"
         android:src="@drawable/login" />
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_marginStart="10dp"
+        android:layout_toEndOf="@id/like_image_view">
 
         <TextView
             android:id="@+id/like_title_text_view"
-            android:layout_width="match_parent"
+            android:layout_width="175dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"
-            android:layout_weight="1"
-            android:text="Item Title" />
+            android:maxLines="5"
+            android:text="Item Title"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/like_image_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="5dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_heart_empty" />
+
+        <View
+            android:id="@+id/like_button_padding_view"
+            android:layout_width="5dp"
+            android:layout_height="0dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/like_image_button" />
 
         <TextView
             android:id="@+id/like_address_text_view"
-            android:layout_width="wrap_content"
+            android:layout_width="175dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"
-            android:text="Item Description" />
+            android:layout_below="@id/like_title_text_view"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:text="Item Description"
+            android:textColor="@color/black"
+            android:textSize="16sp" />
 
-    </LinearLayout>
+    </RelativeLayout>
 
-</LinearLayout>
+</RelativeLayout>
