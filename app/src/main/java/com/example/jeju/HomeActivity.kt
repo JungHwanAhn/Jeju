@@ -34,7 +34,8 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var runnable: Runnable
     private lateinit var requestQueue: RequestQueue
-    var userEmail : String? = null
+    private var userEmail : String? = null
+    private var loginToken : String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -58,6 +59,8 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         val headerBinding = NavHeaderBinding.bind(navigationView.getHeaderView(0))
         userEmail = intent.getStringExtra("email")
         headerBinding.userEmail.text = userEmail
+
+        loginToken = intent.getStringExtra("login").toString()
 
         val url = "http://49.142.162.247:8050/main"
         val adapter = ViewPagerAdapter(this)
@@ -147,6 +150,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             val intent = Intent(this, SearchActivity::class.java)
             intent.putExtra("result", searchTerm)
             intent.putExtra("email", userEmail)
+            intent.putExtra("login", loginToken)
             startActivity(intent)
         }
     }
@@ -167,6 +171,8 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         when(item.itemId){
             R.id.home-> {
                 val intent = Intent(this, HomeActivity::class.java)
+                intent.putExtra("email", userEmail)
+                intent.putExtra("login", intent.getStringExtra("login"))
                 startActivity(intent)
                 finish()
             }
@@ -177,14 +183,15 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             R.id.like-> {
                 val intent = Intent(this, LikeActivity::class.java)
                 intent.putExtra("email", userEmail)
+                intent.putExtra("login", loginToken)
                 startActivity(intent)
             }
             R.id.logout-> {
                 val url = "http://49.142.162.247:8050/oauth/logout"
                 val logoutData: Map<String, String?> = hashMapOf(
-                    "logout" to intent.getStringExtra("login")
+                    "logout" to loginToken
                 )
-                Log.e("MainActivity", "${intent.getStringExtra("login")}")
+                Log.e("MainActivity", loginToken.toString())
 
                 val requestBody = JSONObject(logoutData).toString()
 
@@ -198,6 +205,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                             Toast.makeText(this@HomeActivity, "로그아웃하였습니다.", Toast.LENGTH_SHORT).show()
                             Log.e("HomeActivity", "로그아웃 성공!")
                             val intent = Intent(this@HomeActivity, MainActivity::class.java)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                             startActivity(intent)
                             finish() // 현재 액티비티를 종료합니다.
                         } else {

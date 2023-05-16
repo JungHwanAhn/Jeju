@@ -48,15 +48,16 @@ tools:context=".SearchActivity">
         </LinearLayout>
 
         <!--자식 레이아웃. Navigation Drawer-->
-        <com.google.android.material.navigation.NavigationView
-            android:id="@+id/like_navigationView"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="left"
-            app:headerLayout="@layout/nav_header"
-            app:menu="@menu/menu_option">
 
-
-        </com.google.android.material.navigation.NavigationView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/like_navigationView"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/menu_option">
+
+
+    </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>

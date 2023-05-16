@@ -19,6 +19,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.jeju.databinding.ActivityLikeBinding
 import com.example.jeju.databinding.ActivitySearchBinding
+import com.example.jeju.databinding.NavHeaderBinding
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
@@ -38,6 +39,8 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     private lateinit var likeRecyclerView: RecyclerView
     private lateinit var likeAdapter: LikeAdapter
     private lateinit var requestQueue: RequestQueue
+    private var email: String? = null
+    private var loginToken : String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +62,12 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         navigationView = findViewById(R.id.like_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
+        val headerBinding = NavHeaderBinding.bind(navigationView.getHeaderView(0))
+        email = intent.getStringExtra("email").toString()
+        headerBinding.userEmail.text = email
+
+        loginToken = intent.getStringExtra("login")
+
         printList()
 
         val swipe = findViewById<SwipeRefreshLayout>(R.id.swipe)
@@ -69,7 +78,7 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
 
     }
 
-    fun printList() {
+    private fun printList() {
         val url = "http://49.142.162.247:8050/interest/return"
 
         val jsonRequest = JSONArray().apply {
@@ -125,6 +134,8 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         when(item.itemId){
             R.id.home-> {
                 val intent = Intent(this, HomeActivity::class.java)
+                intent.putExtra("email", email)
+                intent.putExtra("login", loginToken)
                 startActivity(intent)
                 finish()
             }
@@ -134,16 +145,17 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             }
             R.id.like-> {
                 val intent = Intent(this, LikeActivity::class.java)
-                intent.putExtra("email", intent.getStringExtra("email"))
+                intent.putExtra("email", email)
+                intent.putExtra("login", loginToken)
                 startActivity(intent)
                 finish()
             }
             R.id.logout-> {
                 val url = "http://49.142.162.247:8050/oauth/logout"
                 val logoutData: Map<String, String?> = hashMapOf(
-                    "logout" to intent.getStringExtra("login")
+                    "logout" to loginToken
                 )
-                Log.e("MainActivity", "${intent.getStringExtra("login")}")
+                Log.e("MainActivity", loginToken.toString())
 
                 val requestBody = JSONObject(logoutData).toString()
 
@@ -157,6 +169,7 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                             Toast.makeText(this@LikeActivity, "로그아웃하였습니다.", Toast.LENGTH_SHORT).show()
                             Log.e("HomeActivity", "로그아웃 성공!")
                             val intent = Intent(this@LikeActivity, MainActivity::class.java)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                             startActivity(intent)
                             finish() // 현재 액티비티를 종료합니다.
                         } else {
