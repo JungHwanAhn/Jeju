@@ -82,7 +82,7 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
                 put("email", email)
-                put("title", searchTerm)
+                put("tag", searchTerm)
             })
         }
 
@@ -134,6 +134,7 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                 val intent = Intent(this, HomeActivity::class.java)
                 intent.putExtra("email", email)
                 intent.putExtra("login", loginToken)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 startActivity(intent)
                 finish()
             }

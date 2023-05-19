@@ -178,6 +178,8 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             }
             R.id.map-> {
                 val intent = Intent(this, MapActivity::class.java)
+                intent.putExtra("email", userEmail)
+                intent.putExtra("login", loginToken)
                 startActivity(intent)
             }
             R.id.like-> {
