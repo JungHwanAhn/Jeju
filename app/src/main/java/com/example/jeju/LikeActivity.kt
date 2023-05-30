@@ -1,5 +1,6 @@
 package com.example.jeju
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -79,6 +80,7 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     }
 
     private fun printList() {
+        checkToken(this)
         val url = "http://49.142.162.247:8050/interest/return"
 
         val jsonRequest = JSONArray().apply {
@@ -112,7 +114,7 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         requestQueue.add(request)
 
         likeRecyclerView = findViewById(R.id.like_list)
-        likeAdapter = LikeAdapter(this, itemList, intent.getStringExtra("email").toString())
+        likeAdapter = LikeAdapter(this, itemList, intent.getStringExtra("email").toString(), intent.getStringExtra("login").toString())
         likeRecyclerView.adapter = likeAdapter
     }
 
@@ -142,7 +144,10 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             }
             R.id.map-> {
                 val intent = Intent(this, MapActivity::class.java)
+                intent.putExtra("email", email)
+                intent.putExtra("login", loginToken)
                 startActivity(intent)
+                finish()
             }
             R.id.like-> {
                 val intent = Intent(this, LikeActivity::class.java)
@@ -197,5 +202,41 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             }
         }
         return false
+    }
+
+    private fun checkToken(context: Context) {
+        val url = "http://49.142.162.247:8050/tokenCheck"
+        val logoutData: Map<String, String?> = hashMapOf(
+            "logout" to loginToken
+        )
+
+        val requestBody = JSONObject(logoutData).toString()
+
+        val tokenCheckRequest = object : StringRequest(
+            Method.POST,
+            url,
+            Response.Listener<String> { response ->
+                // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                if (response == "fail") {
+                    val intent = Intent(context, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    startActivity(intent)
+                }
+            },
+            Response.ErrorListener { error ->
+                // 요청 실패 시 수행되는 코드를 작성합니다.
+                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Toast.makeText(context, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+            }
+        ) {
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getBody(): ByteArray {
+                return requestBody.toByteArray(Charsets.UTF_8)
+            }
+        }
+        requestQueue.add(tokenCheckRequest)
     }
 }

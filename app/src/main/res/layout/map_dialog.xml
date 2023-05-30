@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:padding="40dp">
+
+        <ImageView
+            android:id="@+id/map_dialog_image"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:scaleType="centerCrop" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp">
+
+            <TextView
+                android:id="@+id/map_dialog_title"
+                android:layout_width="230dp"
+                android:layout_height="wrap_content"
+                android:maxLines="5"
+                android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"/>
+
+            <ImageButton
+                android:id="@+id/map_heart_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_heart_empty"
+                android:paddingTop="4dp"/>
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/map_dialog_introduce"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:paddingTop="4dp" />
+
+    </LinearLayout>
+
+</FrameLayout>
+

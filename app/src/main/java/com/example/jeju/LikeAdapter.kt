@@ -21,7 +21,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import org.json.JSONObject
 
-class LikeAdapter(private val context: Context, private var likeList: List<Item>, private val email: String) :
+class LikeAdapter(private val context: Context, private var likeList: List<Item>, private val email: String, private val loginToken: String) :
     RecyclerView.Adapter<LikeAdapter.ViewHolder>() {
     private lateinit var requestQueue: RequestQueue
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -63,6 +63,7 @@ class LikeAdapter(private val context: Context, private var likeList: List<Item>
 
             heartButton.setOnClickListener {
                 if (heartButton.tag == "empty") {
+                    checkToken(context)
                     heartButton.setImageResource(R.drawable.ic_heart_filled)
                     heartButton.tag = "filled"
                     val addUrl = "http://49.142.162.247:8050/interest/add"
@@ -104,6 +105,7 @@ class LikeAdapter(private val context: Context, private var likeList: List<Item>
                     // 생성한 Request 객체를 RequestQueue에 추가합니다.
                     requestQueue.add(addRequest)
                 } else {
+                    checkToken(context)
                     heartButton.setImageResource(R.drawable.ic_heart_empty)
                     heartButton.tag = "empty"
                     val deleteUrl = "http://49.142.162.247:8050/interest/delete"
@@ -146,6 +148,42 @@ class LikeAdapter(private val context: Context, private var likeList: List<Item>
                 }
             }
         }
+    }
+
+    private fun checkToken(context: Context) {
+        val url = "http://49.142.162.247:8050/tokenCheck"
+        val logoutData: Map<String, String?> = hashMapOf(
+            "logout" to loginToken
+        )
+
+        val requestBody = JSONObject(logoutData).toString()
+
+        val tokenCheckRequest = object : StringRequest(
+            Method.POST,
+            url,
+            Response.Listener<String> { response ->
+                // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                if (response == "fail") {
+                    val intent = Intent(context, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    context.startActivity(intent)
+                }
+            },
+            Response.ErrorListener { error ->
+                // 요청 실패 시 수행되는 코드를 작성합니다.
+                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Toast.makeText(context, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+            }
+        ) {
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getBody(): ByteArray {
+                return requestBody.toByteArray(Charsets.UTF_8)
+            }
+        }
+        requestQueue.add(tokenCheckRequest)
     }
 }
 

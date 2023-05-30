@@ -22,6 +22,60 @@
             android:layout_height="wrap_content"
             layout="@layout/nav_home" />
 
+        <LinearLayout
+            android:id="@+id/map_option"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="center"
+                android:textColor="@color/black"
+                android:text="혼잡도"/>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="visible">
+                <CheckBox
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="원활"
+                    android:id="@+id/check1"
+                    android:checked="true"
+                    android:layout_marginStart="20dp"/>
+                <CheckBox
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="보통"
+                    android:id="@+id/check2"
+                    android:checked="true" />
+                <CheckBox
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="혼잡"
+                    android:id="@+id/check3"
+                    android:checked="true" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+        <ImageButton
+            android:id="@+id/option_drawer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_less"/>
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"

@@ -32,6 +32,37 @@
             android:drawableStart="@drawable/ic_search"
             android:hint="관광지 검색"
             android:background="@drawable/custom_edittext"/>
+
+        <RadioGroup
+            android:id="@+id/search_option"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:checkedButton="@id/option_default">
+
+            <RadioButton
+                android:id="@+id/option_default"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="기본"
+                android:layout_marginStart="20dp"/>
+
+            <RadioButton
+                android:id="@+id/option_traffic"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="혼잡도" />
+
+            <RadioButton
+                android:id="@+id/option_location"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="위치"/>
+        </RadioGroup>
+
         <Button
             android:id="@+id/search_btn"
             android:layout_width="130dp"
@@ -40,6 +71,16 @@
             android:layout_gravity="center_horizontal"
             android:backgroundTint="@color/orange"
             android:text="검색하기" />
+
+        <TextView
+            android:id="@+id/no_results_text"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="No search results"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/result_list"

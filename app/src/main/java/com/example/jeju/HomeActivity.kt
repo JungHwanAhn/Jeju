@@ -1,15 +1,23 @@
 package com.example.jeju
 
+import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.viewpager2.widget.ViewPager2
@@ -36,6 +44,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     private lateinit var requestQueue: RequestQueue
     private var userEmail : String? = null
     private var loginToken : String? = null
+    private val ACCESS_FINE_LOCATION = 1000 // Request Code
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -56,11 +65,15 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         navigationView = findViewById(R.id.main_navigationView)
         navigationView.setNavigationItemSelectedListener(this) //navigation 리스너
 
+        permissionCheck()
+
         val headerBinding = NavHeaderBinding.bind(navigationView.getHeaderView(0))
         userEmail = intent.getStringExtra("email")
         headerBinding.userEmail.text = userEmail
 
         loginToken = intent.getStringExtra("login").toString()
+
+        checkToken(this)
 
         val url = "http://49.142.162.247:8050/main"
         val adapter = ViewPagerAdapter(this)
@@ -148,6 +161,12 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         binding.searchBtn.setOnClickListener {
             val searchTerm = binding.searchEdit.text.toString()
             val intent = Intent(this, SearchActivity::class.java)
+
+            when (binding.searchOption.checkedRadioButtonId) {
+                R.id.option_default -> intent.putExtra("option", "0")
+                R.id.option_traffic -> intent.putExtra("option", "1")
+                R.id.option_location -> intent.putExtra("option", "2")
+            }
             intent.putExtra("result", searchTerm)
             intent.putExtra("email", userEmail)
             intent.putExtra("login", loginToken)
@@ -172,7 +191,7 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             R.id.home-> {
                 val intent = Intent(this, HomeActivity::class.java)
                 intent.putExtra("email", userEmail)
-                intent.putExtra("login", intent.getStringExtra("login"))
+                intent.putExtra("login", loginToken)
                 startActivity(intent)
                 finish()
             }
@@ -235,6 +254,43 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         }
         return false
     }
+
+    private fun checkToken(context: Context) {
+        val url = "http://49.142.162.247:8050/tokenCheck"
+        val logoutData: Map<String, String?> = hashMapOf(
+            "logout" to loginToken
+        )
+
+        val requestBody = JSONObject(logoutData).toString()
+
+        val tokenCheckRequest = object : StringRequest(
+            Method.POST,
+            url,
+            Response.Listener<String> { response ->
+                // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                if (response == "fail") {
+                    val intent = Intent(context, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    startActivity(intent)
+                }
+            },
+            Response.ErrorListener { error ->
+                // 요청 실패 시 수행되는 코드를 작성합니다.
+                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Toast.makeText(context, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+            }
+        ) {
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getBody(): ByteArray {
+                return requestBody.toByteArray(Charsets.UTF_8)
+            }
+        }
+        requestQueue.add(tokenCheckRequest)
+    }
+
     override fun onBackPressed() {
         // 뒤로가기 버튼 클릭
         if(System.currentTimeMillis() - backPressedTime < 2000 ) {
@@ -243,5 +299,58 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         }
         Toast.makeText(this, "'뒤로'버튼을 한번 더 누르시면 앱이 종료됩니다.", Toast.LENGTH_SHORT).show()
         backPressedTime = System.currentTimeMillis()
+    }
+
+    private fun permissionCheck() {
+        val preference = getPreferences(MODE_PRIVATE)
+        val isFirstCheck = preference.getBoolean("isFirstPermissionCheck", true)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // 권한이 없는 상태
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // 권한 거절 (다시 한 번 물어봄)
+                val builder = AlertDialog.Builder(this)
+                builder.setMessage("정상적인 앱 작동을 위해 위치 권한을 허용해주세요.")
+                builder.setPositiveButton("확인") { dialog, which ->
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
+                }
+                builder.setNegativeButton("취소") { dialog, which ->
+                    finish()
+                }
+                builder.show()
+            } else {
+                if (isFirstCheck) {
+                    // 최초 권한 요청
+                    preference.edit().putBoolean("isFirstPermissionCheck", false).apply()
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
+                } else {
+                    // 다시 묻지 않음 클릭 (앱 정보 화면으로 이동)
+                    val builder = AlertDialog.Builder(this)
+                    builder.setMessage("위치 권한을 허용하지 않을 시, 앱이 종료됩니다.")
+                    builder.setPositiveButton("설정으로 이동") { dialog, which ->
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+                        startActivity(intent)
+                    }
+                    builder.setNegativeButton("취소") { dialog, which ->
+                        finish()
+                    }
+                    builder.show()
+                }
+            }
+        } else {
+            // 권한이 있는 상태
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == ACCESS_FINE_LOCATION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "위치 권한이 승인되었습니다.", Toast.LENGTH_SHORT).show()
+            } else {
+                // 권한 요청 후 거절됨 (다시 요청 or 토스트)
+                Toast.makeText(this, "위치 권한이 거절되었습니다.", Toast.LENGTH_SHORT).show()
+                permissionCheck()
+            }
+        }
     }
 }

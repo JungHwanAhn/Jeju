@@ -1,6 +1,8 @@
 package com.example.jeju
 
 import android.Manifest
+import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -8,7 +10,13 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.View
+import android.view.Window
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
@@ -16,24 +24,234 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.android.volley.AuthFailureError
+import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
+import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.jeju.databinding.ActivityMapBinding
 import com.example.jeju.databinding.NavHeaderBinding
 import com.google.android.material.navigation.NavigationView
+import net.daum.mf.map.api.CalloutBalloonAdapter
 import net.daum.mf.map.api.MapPOIItem
 import net.daum.mf.map.api.MapPoint
 import net.daum.mf.map.api.MapView
+import org.json.JSONArray
 import org.json.JSONObject
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+class MapDialog(context: Context) : Dialog(context) {
+    private var loginToken: String? = null
+    private var image: String? = null
+    private var title: String? = null
+    private var like: String? = null
+    private var tourId: String? = null
+    private var email: String? = null
+    private var introduction: String? = null
+
+    private lateinit var requestQueue: RequestQueue
+
+    fun setLoginToken(loginToken: String) {
+        this.loginToken = loginToken
+    }
+    fun setImageResId(image: String) {
+        this.image = image
+    }
+
+    fun setTitle(title: String) {
+        this.title = title
+    }
+    fun setIntroduction(introduction: String) {
+        this.introduction = introduction
+    }
+
+    fun setLike(like: String) {
+        this.like = like
+    }
+
+    fun setTourId(tourId: String) {
+        this.tourId = tourId
+    }
+
+    fun setEmail(email: String) {
+        this.email = email
+    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val inflater = LayoutInflater.from(context)
+        val requestQueue = Volley.newRequestQueue(context)
+        val dialogView: View = inflater.inflate(R.layout.map_dialog, null)
+        setContentView(dialogView)
+
+        val titleTextView: TextView = dialogView.findViewById(R.id.map_dialog_title)
+        val introduceTextView: TextView = dialogView.findViewById(R.id.map_dialog_introduce)
+        val imageView: ImageView = dialogView.findViewById(R.id.map_dialog_image)
+        val heartButton: ImageButton = dialogView.findViewById(R.id.map_heart_button)
+        val imageUrl = image
+        if (!imageUrl.isNullOrEmpty()) {
+            Glide.with(dialogView.context).load(imageUrl).apply(RequestOptions().centerCrop()).into(imageView)
+        }
+
+        if (like == "1") {
+            heartButton.setImageResource(R.drawable.ic_heart_filled)
+            heartButton.tag = "filled"
+        }
+        else {
+            heartButton.setImageResource(R.drawable.ic_heart_empty)
+            heartButton.tag = "empty"
+        }
+
+        heartButton.setOnClickListener {
+            checkToken(context)
+            if (heartButton.tag == "empty") {
+                heartButton.setImageResource(R.drawable.ic_heart_filled)
+                heartButton.tag = "filled"
+                val addUrl = "http://49.142.162.247:8050/interest/add"
+                val addData: Map<String, String> = hashMapOf(
+                    "email" to email.toString(),
+                    "tourid" to tourId.toString()
+                )
+
+                val requestBody = JSONObject(addData).toString()
+
+                val addRequest = object : StringRequest(
+                    Method.POST, // 요청 방식을 POST로 지정합니다.
+                    addUrl, // 요청을 보낼 URL 주소를 지정합니다.
+                    Response.Listener<String>
+                    { response ->
+                        // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                        if (response == "success") {
+                            Toast.makeText(context, "찜 등록!", Toast.LENGTH_SHORT).show()
+                            Log.e("SearchAdapter", "찜 등록!")
+                        }
+                        else {
+                            Toast.makeText(context, "찜 등록 실패", Toast.LENGTH_SHORT).show()
+                            Log.e("SearchAdapter", "찜 등록 실패")
+                        }
+                    },
+                    Response.ErrorListener { error ->
+                        // 요청 실패 시 수행되는 코드를 작성합니다.
+                        Log.e("SearchAdapter", "error!", error)
+                        Toast.makeText(context, "error!", Toast.LENGTH_SHORT).show()
+                    }) {
+                    override fun getBodyContentType(): String {
+                        return "application/json; charset=utf-8"
+                    }
+                    @Throws(AuthFailureError::class)
+                    override fun getBody(): ByteArray {
+                        return requestBody.toByteArray(Charsets.UTF_8)
+                    }
+                }
+                // 생성한 Request 객체를 RequestQueue에 추가합니다.
+                requestQueue.add(addRequest)
+            } else {
+                checkToken(context)
+                heartButton.setImageResource(R.drawable.ic_heart_empty)
+                heartButton.tag = "empty"
+                val deleteUrl = "http://49.142.162.247:8050/interest/delete"
+                val deleteData: Map<String, String> = hashMapOf(
+                    "email" to email.toString(),
+                    "tourid" to tourId.toString()
+                )
+                val requestBody = JSONObject(deleteData).toString()
+
+                val deleteRequest = object : StringRequest(
+                    Method.POST, // 요청 방식을 POST로 지정합니다.
+                    deleteUrl, // 요청을 보낼 URL 주소를 지정합니다.
+                    Response.Listener<String>
+                    { response ->
+                        // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                        if (response == "success") {
+                            Toast.makeText(context, "찜 삭제!", Toast.LENGTH_SHORT).show()
+                            Log.e("SearchAdapter", "찜 삭제!")
+                        }
+                        else {
+                            Toast.makeText(context, "찜 삭제 실패", Toast.LENGTH_SHORT).show()
+                            Log.e("SearchAdapter", "찜 삭제 실패")
+                        }
+                    },
+                    Response.ErrorListener { error ->
+                        // 요청 실패 시 수행되는 코드를 작성합니다.
+                        Log.e("SearchAdapter", "error!", error)
+                        Toast.makeText(context, "error!", Toast.LENGTH_SHORT).show()
+                    }) {
+                    override fun getBodyContentType(): String {
+                        return "application/json; charset=utf-8"
+                    }
+                    @Throws(AuthFailureError::class)
+                    override fun getBody(): ByteArray {
+                        return requestBody.toByteArray(Charsets.UTF_8)
+                    }
+                }
+                // 생성한 Request 객체를 RequestQueue에 추가합니다.
+                requestQueue.add(deleteRequest)
+            }
+        }
+
+        titleTextView.text = title
+        introduceTextView.text = introduction
+    }
+    private fun checkToken(context: Context) {
+        val requestQueue = Volley.newRequestQueue(context)
+        val url = "http://49.142.162.247:8050/tokenCheck"
+        val logoutData: Map<String, String?> = hashMapOf(
+            "logout" to loginToken
+        )
+
+        val requestBody = JSONObject(logoutData).toString()
+
+        val tokenCheckRequest = object : StringRequest(
+            Method.POST,
+            url,
+            Response.Listener<String> { response ->
+                // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                if (response == "fail") {
+                    val intent = Intent(context, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    context.startActivity(intent)
+                }
+            },
+            Response.ErrorListener { error ->
+                // 요청 실패 시 수행되는 코드를 작성합니다.
+                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Toast.makeText(context, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+            }
+        ) {
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getBody(): ByteArray {
+                return requestBody.toByteArray(Charsets.UTF_8)
+            }
+        }
+        requestQueue.add(tokenCheckRequest)
+    }
+}
 class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
     MapView.MapViewEventListener, NavigationView.OnNavigationItemSelectedListener {
     val currentLocationMaker: MapPOIItem = MapPOIItem()
     var centerPoint: MapPoint? = null
+
     private var email: String? = null
     private var loginToken : String? = null
+    private var tourId: String? = null
+    private var title: String? = null
+    private var like: String? = null
+    private var introduction: String? = null
+    private var address: String? = null
+    private var image: String? = null
+
+    var checkSmooth: Boolean = true
+    var checkNormal: Boolean = true
+    var checkCongestion: Boolean = true
+
     private val ACCESS_FINE_LOCATION = 1000 // Request Code
 
     lateinit var navigationView: NavigationView
@@ -65,26 +283,56 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         email = intent.getStringExtra("email").toString()
         headerBinding.userEmail.text = email
 
-        loginToken = intent.getStringExtra("login")
+        loginToken = intent.getStringExtra("login").toString()
 
         if (MapView.isMapTilePersistentCacheEnabled()) {
             MapView.setMapTilePersistentCacheEnabled(true)
         }
 
+        binding.optionDrawer.setOnClickListener {
+            if (binding.mapOption.tag == "open") {
+                binding.optionDrawer.setImageResource(R.drawable.ic_more)
+                binding.mapOption.visibility = View.GONE
+                binding.mapOption.tag = "close"
+                binding.mapView.removeAllPOIItems()
+                marking()
+            } else {
+                binding.optionDrawer.setImageResource(R.drawable.ic_less)
+                binding.mapOption.visibility = View.VISIBLE
+                binding.mapOption.tag = "open"
+            }
+        }
+
+        binding.check1.setOnCheckedChangeListener { View, isChecked ->
+            checkSmooth = isChecked
+            Log.e("dfdf", "dfdf")
+        }
+        binding.check2.setOnCheckedChangeListener { View, isChecked ->
+            checkNormal = isChecked
+        }
+        binding.check3.setOnCheckedChangeListener { View, isChecked ->
+            checkCongestion = isChecked
+        }
+
+
+        binding.mapView.setCalloutBalloonAdapter(CustomBalloonAdapter(this, layoutInflater))
+
         binding.btnMyLocation.setOnClickListener {
-            startTracking()
+            permissionCheck()
             if (centerPoint != null) {
                 val point = MapPoint.mapPointWithGeoCoord(
                     centerPoint!!.mapPointGeoCoord.latitude,
                     centerPoint!!.mapPointGeoCoord.longitude
                 )
                 binding.mapView.setMapCenterPoint(point, false)
+
             }
         }
 
         binding.mapView.setMapViewEventListener(this)
         binding.mapView.setPOIItemEventListener(this)
 
+        marking()
 
         class CurrentLocationListener : MapView.CurrentLocationEventListener {
             override fun onCurrentLocationUpdateFailed(p0: MapView?) {
@@ -121,61 +369,195 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         }
 
         binding.mapView.setCurrentLocationEventListener(CurrentLocationListener())
+
+
+
     }
 
-    private fun createCustomMaker(mapView: MapView) {
+    private fun marking() {
+        val current = LocalDateTime.now()
+        val formatDate = DateTimeFormatter.ofPattern("yyyyMMdd")
+        val formatHour = DateTimeFormatter.ofPattern("HH")
+        val baseDate = current.format(formatDate)
+        val baseHour = current.format(formatHour)
+
+        checkToken(this)
+
+        val url = "http://49.142.162.247:8050/recommand"
+
+        val jsonRequest = JSONArray().apply {
+            put(JSONObject().apply {
+                put("baseDate", baseDate)
+                put("baseHour", baseHour)
+            })
+        }
+
+        val request = JsonArrayRequest(
+            Request.Method.POST, url, jsonRequest,
+            { response ->
+                // 결과 받아서 처리
+                for (i in 0 until response.length()) {
+                    image = response.getJSONObject(i).getString("imagepath")
+                    title = response.getJSONObject(i).getString("title")
+                    address = response.getJSONObject(i).getString("roadaddress")
+                    tourId = response.getJSONObject(i).getString("tourId")
+                    val latitude = response.getJSONObject(i).getDouble("latitude")
+                    val longitude = response.getJSONObject(i).getDouble("longitude")
+                    val traffic = response.getJSONObject(i).getString("traffic")
+
+                    val point = MapPoint.mapPointWithGeoCoord(
+                        latitude,
+                        longitude
+                    )
+
+                    if (checkSmooth && traffic == "0") {
+                        createSmoothMaker(point)
+                    } else if(checkNormal && traffic == "1") {
+                        createNormalMaker(point)
+                    } else if(checkCongestion && traffic == "2") {
+                        createCongestionMaker(point)
+                    }
+                }
+            },
+            { error ->
+                // 에러 처리
+                Toast.makeText(this, "관광지 데이터 요청 실패!", Toast.LENGTH_SHORT).show()
+                Log.e("MapActivity", "관광지 데이터 요청 실패!", error)
+            })
+        requestQueue.add(request)
+    }
+
+    inner class CustomBalloonAdapter(val context: Context, inflater: LayoutInflater): CalloutBalloonAdapter {
+        private val mCalloutBalloon: View = inflater.inflate(R.layout.balloon_layout, null)
+        private val nameTextView: TextView = mCalloutBalloon.findViewById(R.id.ball_tv_name)
+        private val addressTextView: TextView = mCalloutBalloon.findViewById(R.id.ball_tv_address)
+
+        override fun getCalloutBalloon(poiItem: MapPOIItem?): View {
+            checkToken(context)
+            val url = "http://49.142.162.247:8050/search/title"
+
+            val jsonRequest = JSONArray().apply {
+                put(JSONObject().apply {
+                    put("email", email)
+                    put("title", poiItem?.itemName)
+                    put("option", "0")
+                    put("latitude", "0")
+                    put("longitude", "0")
+                })
+            }
+
+            val request = JsonArrayRequest(
+                Request.Method.POST, url, jsonRequest,
+                { response ->
+                    // 결과 받아서 처리
+                    for (i in 0 until response.length()) {
+                        title = response.getJSONObject(i).getString("title")
+                        tourId = response.getJSONObject(i).getString("tourId")
+                        like = response.getJSONObject(i).getString("interested")
+                        introduction = response.getJSONObject(i).getString("introduction")
+                        address = response.getJSONObject(i).getString("roadaddress")
+                        image = response.getJSONObject(i).getString("imagepath")
+                    }
+
+                },
+                { error ->
+                    // 에러 처리
+                    Toast.makeText(context, "검색결과 요청 실패!", Toast.LENGTH_SHORT).show()
+                    Log.e("SearchActivity", "검색결과 요청 실패!", error)
+                })
+            requestQueue.add(request)
+            nameTextView.text = poiItem?.itemName
+            addressTextView.text = address
+
+            return mCalloutBalloon
+        }
+
+        override fun getPressedCalloutBalloon(poiItem: MapPOIItem?): View {
+            return mCalloutBalloon
+        }
+    }
+    private fun checkToken(context: Context) {
+        val url = "http://49.142.162.247:8050/tokenCheck"
+        val logoutData: Map<String, String?> = hashMapOf(
+            "logout" to loginToken
+        )
+
+        val requestBody = JSONObject(logoutData).toString()
+
+        val tokenCheckRequest = object : StringRequest(
+            Method.POST,
+            url,
+            Response.Listener<String> { response ->
+                // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                if (response == "fail") {
+                    val intent = Intent(context, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    startActivity(intent)
+                }
+            },
+            Response.ErrorListener { error ->
+                // 요청 실패 시 수행되는 코드를 작성합니다.
+                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Toast.makeText(context, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+            }
+        ) {
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getBody(): ByteArray {
+                return requestBody.toByteArray(Charsets.UTF_8)
+            }
+        }
+        requestQueue.add(tokenCheckRequest)
+    }
+
+    private fun createSmoothMaker(point: MapPoint) {
         val customMaker = MapPOIItem()
-        customMaker.itemName = "Custom Marker"
-        customMaker.tag = 1
-        println("eventPoint: $centerPoint")
-        customMaker.mapPoint = centerPoint
-        customMaker.markerType = MapPOIItem.MarkerType.CustomImage
-        customMaker.customImageResourceId = R.drawable.ic_location_mark
+        customMaker.itemName = title
+        customMaker.mapPoint = point
+        customMaker.markerType = MapPOIItem.MarkerType.BluePin
+        customMaker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
         customMaker.isCustomImageAutoscale = false
         customMaker.setCustomImageAnchor(0.5f, 0.5f)
         binding.mapView.addPOIItem(customMaker)
-        binding.mapView.selectPOIItem(customMaker, true)
-        binding.mapView.setMapCenterPoint(centerPoint, false)
     }
 
-    private fun createStoreMaker(mapView: MapView, storePoint: MapPoint) {
+    private fun createNormalMaker(point: MapPoint) {
         val customMaker = MapPOIItem()
-        customMaker.itemName = "Custom Marker"
-        customMaker.tag = 1
-        customMaker.mapPoint = storePoint
-        customMaker.markerType = MapPOIItem.MarkerType.CustomImage
-        customMaker.customImageResourceId = R.drawable.ic_location_mark
+        customMaker.itemName = title
+        customMaker.mapPoint = point
+        customMaker.markerType = MapPOIItem.MarkerType.YellowPin
+        customMaker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
         customMaker.isCustomImageAutoscale = false
-        currentLocationMaker.setCustomImageAnchor(0.5f, 0.5f)
-        binding.mapView.addPOIItem(currentLocationMaker)
-        binding.mapView.selectPOIItem(currentLocationMaker, true)
-        binding.mapView.setMapCenterPoint(centerPoint, false)
+        customMaker.setCustomImageAnchor(0.5f, 0.5f)
+        binding.mapView.addPOIItem(customMaker)
     }
 
-    private fun startTracking() {
+    private fun createCongestionMaker(point: MapPoint) {
+        val customMaker = MapPOIItem()
+        customMaker.itemName = title
+        customMaker.mapPoint = point
+        customMaker.markerType = MapPOIItem.MarkerType.RedPin
+        customMaker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
+        customMaker.isCustomImageAutoscale = false
+        customMaker.setCustomImageAnchor(0.5f, 0.5f)
+        binding.mapView.addPOIItem(customMaker)
+    }
+
+    private fun permissionCheck() {
         binding.btnMyLocation.setImageResource(R.drawable.ic_gps_fixed)
         val preference = getPreferences(MODE_PRIVATE)
         val isFirstCheck = preference.getBoolean("isFirstPermissionCheck", true)
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // 권한이 없는 상태
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            ) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 // 권한 거절 (다시 한 번 물어봄)
                 val builder = AlertDialog.Builder(this)
                 builder.setMessage("현재 위치를 확인하시려면 위치 권한을 허용해주세요.")
+                Log.e("Map", "maperorre")
                 builder.setPositiveButton("확인") { dialog, which ->
-                    ActivityCompat.requestPermissions(
-                        this,
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                        ACCESS_FINE_LOCATION
-                    )
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
                 }
                 builder.setNegativeButton("취소") { dialog, which ->
 
@@ -185,20 +567,13 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 if (isFirstCheck) {
                     // 최초 권한 요청
                     preference.edit().putBoolean("isFirstPermissionCheck", false).apply()
-                    ActivityCompat.requestPermissions(
-                        this,
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                        ACCESS_FINE_LOCATION
-                    )
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
                 } else {
                     // 다시 묻지 않음 클릭 (앱 정보 화면으로 이동)
                     val builder = AlertDialog.Builder(this)
                     builder.setMessage("현재 위치를 확인하시려면 설정에서 위치 권한을 허용해주세요.")
                     builder.setPositiveButton("설정으로 이동") { dialog, which ->
-                        val intent = Intent(
-                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.parse("package:$packageName")
-                        )
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
                         startActivity(intent)
                     }
                     builder.setNegativeButton("취소") { dialog, which ->
@@ -209,11 +584,34 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             }
         } else {
             // 권한이 있는 상태
-            binding.mapView.currentLocationTrackingMode =
-                MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading
+            startTracking()
         }
     }
 
+    // 권한 요청 후 행동
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == ACCESS_FINE_LOCATION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // 권한 요청 후 승인됨 (추적 시작)
+                Toast.makeText(this, "위치 권한이 승인되었습니다", Toast.LENGTH_SHORT).show()
+                startTracking()
+            } else {
+                // 권한 요청 후 거절됨 (다시 요청 or 토스트)
+                Toast.makeText(this, "위치 권한이 거절되었습니다", Toast.LENGTH_SHORT).show()
+                permissionCheck()
+            }
+        }
+    }
+
+    private fun startTracking() {
+        binding.mapView.currentLocationTrackingMode =
+            MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading
+    }
+
+    override fun onPOIItemSelected(p0: MapView?, p1: MapPOIItem?) {
+
+    }
     override fun onCalloutBalloonOfPOIItemTouched(p0: MapView?, p1: MapPOIItem?) {
 
     }
@@ -222,16 +620,21 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         p1: MapPOIItem?,
         p2: MapPOIItem.CalloutBalloonButtonType?
     ) {
-
+        val mapDialog = MapDialog(this@MapActivity)
+        mapDialog.setLoginToken(loginToken!!)
+        mapDialog.setImageResId(image!!)
+        mapDialog.setTitle(title!!)
+        mapDialog.setIntroduction(introduction!!)
+        mapDialog.setLike(like!!)
+        mapDialog.setTourId(tourId!!)
+        mapDialog.setEmail(email!!)
+        mapDialog.show()
     }
 
     override fun onDraggablePOIItemMoved(p0: MapView?, p1: MapPOIItem?, p2: MapPoint?) {
 
     }
 
-    override fun onPOIItemSelected(p0: MapView?, p1: MapPOIItem?) {
-
-    }
 
     override fun onMapViewDoubleTapped(p0: MapView?, p1: MapPoint?) {
 
@@ -295,8 +698,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 finish()
             }
             R.id.map-> {
-                val intent = Intent(this, MapActivity::class.java)
-                startActivity(intent)
+                drawerLayout.closeDrawer(GravityCompat.START)
             }
             R.id.like-> {
                 val intent = Intent(this, LikeActivity::class.java)

@@ -1,12 +1,26 @@
 package com.example.jeju
 
+import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.RecyclerView
@@ -21,22 +35,31 @@ import com.example.jeju.databinding.NavHeaderBinding
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.*
 
 data class Result(
     val title: String,
     val tourId: String,
-    val like: String
+    val like: String,
+    val introduction: String,
+    val image: String
 )
 class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     lateinit var navigationView: NavigationView
     lateinit var drawerLayout: DrawerLayout
     lateinit var binding: ActivitySearchBinding
+    private val ACCESS_FINE_LOCATION = 1000 // Request Code
+
     private lateinit var resultRecyclerView: RecyclerView
     private lateinit var resultAdapter: SearchAdapter
     private lateinit var requestQueue: RequestQueue
+    private lateinit var locationManager: LocationManager
+
     private var searchTerm: String? = null
     private var email: String? = null
     private var loginToken : String? = null
+    private var latitude: Double? = null
+    private var longitude: Double? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,27 +85,55 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         email = intent.getStringExtra("email").toString()
         headerBinding.userEmail.text = email
 
-        loginToken = intent.getStringExtra("login")
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        var userLocation: Location = getLatLng()
+        if(userLocation != null) {
+            latitude = userLocation.latitude
+            longitude = userLocation.longitude
+            Log.d("checkLocation", "${latitude}, ${longitude}")
 
+        }
+
+        val option = intent.getStringExtra("option")
+
+        when(option) {
+            "0" -> binding.optionDefault.isChecked = true
+            "1" -> binding.optionTraffic.isChecked = true
+            "2" -> binding.optionLocation.isChecked = true
+        }
+
+        loginToken = intent.getStringExtra("login")
         searchTerm = intent.getStringExtra("result").toString()
-        search(searchTerm!!, email!!)
+        binding.searchEdit.setText(searchTerm)
+
+        search(searchTerm!!, email!!, option!!, latitude!!, longitude!!)
 
         binding.searchBtn.setOnClickListener {
             searchTerm = binding.searchEdit.text.toString()
-            search(searchTerm!!, email!!)
+            var option: String? = null
+            when (binding.searchOption.checkedRadioButtonId) {
+                R.id.option_default -> option = "0"
+                R.id.option_traffic -> option = "1"
+                R.id.option_location -> option = "2"
+            }
+            search(searchTerm!!, email!!, option!!, latitude!!, longitude!!)
         }
 
     }
 
     // 검색어 가져오기
-    private fun search(searchTerm: String, email: String) {
+    private fun search(searchTerm: String, email: String, option: String, latitude: Double, longitude: Double) {
         val results = mutableListOf<Result>()
+        checkToken()
         val url = "http://49.142.162.247:8050/search/title"
 
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
                 put("email", email)
-                put("tag", searchTerm)
+                put("title", searchTerm)
+                put("option", option)
+                put("latitude", latitude)
+                put("longitude", longitude)
             })
         }
 
@@ -90,17 +141,25 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
             Request.Method.POST, url, jsonRequest,
             { response ->
                 // 결과 받아서 처리
-                for (i in 0 until response.length()) {
-                    val title = response.getJSONObject(i).getString("title")
-                    val tourId = response.getJSONObject(i).getString("tourId")
-                    val like = response.getJSONObject(i).getString("interested")
-                    Log.d("SearchActivity", title)
-                    Log.d("SearchActivity", tourId)
-                    Log.d("SearchActivity", like)
-                    val result = Result(title, tourId, like)
-                    results.add(result)
+                if (response.length() > 0) {
+                    for (i in 0 until response.length()) {
+                        val title = response.getJSONObject(i).getString("title")
+                        val tourId = response.getJSONObject(i).getString("tourId")
+                        val like = response.getJSONObject(i).getString("interested")
+                        val introduction = response.getJSONObject(i).getString("introduction")
+                        val image = response.getJSONObject(i).getString("imagepath")
+
+                        val result = Result(title, tourId, like, introduction, image)
+                        results.add(result)
+
+                        val noResultsText = findViewById<TextView>(R.id.no_results_text)
+                        noResultsText.visibility = View.GONE
+                    }
+                    resultAdapter.notifyDataSetChanged()
+                } else {
+                    val noResultsText = findViewById<TextView>(R.id.no_results_text)
+                    noResultsText.visibility = View.VISIBLE
                 }
-                resultAdapter.notifyDataSetChanged()
             },
             { error ->
                 // 에러 처리
@@ -110,9 +169,49 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         requestQueue.add(request)
 
         resultRecyclerView = findViewById(R.id.result_list)
-        resultAdapter = SearchAdapter(this, results, intent.getStringExtra("email").toString())
+        resultAdapter = SearchAdapter(this, results, intent.getStringExtra("email").toString(), intent.getStringExtra("login").toString())
         resultRecyclerView.adapter = resultAdapter
     }
+
+    private fun getLatLng(): Location {
+        var currentLatLng: Location? = null
+        var hasFineLocationPermission = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        var hasCoarseLocationPermission = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
+            hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
+            val locationProvider = LocationManager.GPS_PROVIDER
+            currentLatLng = locationManager?.getLastKnownLocation(locationProvider)
+
+        } else {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Toast.makeText(this, "앱을 실행하려면 위치 접근 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
+            } else {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
+            }
+            currentLatLng = getLatLng()
+        }
+        return currentLatLng!!
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == ACCESS_FINE_LOCATION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // 권한 요청 후 승인됨 (추적 시작)
+                Toast.makeText(this, "위치 권한이 승인되었습니다", Toast.LENGTH_SHORT).show()
+                getLatLng()
+            } else {
+                // 권한 요청 후 거절됨 (다시 요청 or 토스트)
+                Toast.makeText(this, "위치 권한이 거절되었습니다", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
 
     // 툴바 메뉴 버튼이 클릭 됐을 때 실행하는 함수
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -140,7 +239,10 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
             }
             R.id.map-> {
                 val intent = Intent(this, MapActivity::class.java)
+                intent.putExtra("email", email)
+                intent.putExtra("login", loginToken)
                 startActivity(intent)
+                finish()
             }
             R.id.like-> {
                 val intent = Intent(this, LikeActivity::class.java)
@@ -195,5 +297,42 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
             }
         }
         return false
+    }
+
+    private fun checkToken() {
+        val url = "http://49.142.162.247:8050/tokenCheck"
+        val logoutData: Map<String, String?> = hashMapOf(
+            "logout" to loginToken
+        )
+
+        val requestBody = JSONObject(logoutData).toString()
+
+        val tokenCheckRequest = object : StringRequest(
+            Method.POST,
+            url,
+            Response.Listener<String> { response ->
+                // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                if (response == "fail") {
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    startActivity(intent)
+                    finish()
+                }
+            },
+            Response.ErrorListener { error ->
+                // 요청 실패 시 수행되는 코드를 작성합니다.
+                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Toast.makeText(this, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+            }
+        ) {
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getBody(): ByteArray {
+                return requestBody.toByteArray(Charsets.UTF_8)
+            }
+        }
+        requestQueue.add(tokenCheckRequest)
     }
 }
