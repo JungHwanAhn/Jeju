@@ -1,23 +1,25 @@
 package com.example.jeju
 
 import android.Manifest
+import android.app.DatePickerDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Paint
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.UnderlineSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.Window
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -44,6 +46,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 class MapDialog(context: Context) : Dialog(context) {
     private var loginToken: String? = null
@@ -259,6 +262,12 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
     private lateinit var requestQueue: RequestQueue
     private lateinit var binding: ActivityMapBinding
 
+    private val current = LocalDateTime.now()
+    private val formatDate = DateTimeFormatter.ofPattern("yyyyMMdd")
+    private val formatHour = DateTimeFormatter.ofPattern("HH")
+    private var baseDate = current.format(formatDate)
+    private var baseHour = current.format(formatHour)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapBinding.inflate(layoutInflater)
@@ -294,8 +303,6 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 binding.optionDrawer.setImageResource(R.drawable.ic_more)
                 binding.mapOption.visibility = View.GONE
                 binding.mapOption.tag = "close"
-                binding.mapView.removeAllPOIItems()
-                marking()
             } else {
                 binding.optionDrawer.setImageResource(R.drawable.ic_less)
                 binding.mapOption.visibility = View.VISIBLE
@@ -303,17 +310,36 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             }
         }
 
-        binding.check1.setOnCheckedChangeListener { View, isChecked ->
+        binding.check1.setOnCheckedChangeListener { _, isChecked ->
             checkSmooth = isChecked
-            Log.e("dfdf", "dfdf")
         }
-        binding.check2.setOnCheckedChangeListener { View, isChecked ->
+        binding.check2.setOnCheckedChangeListener { _, isChecked ->
             checkNormal = isChecked
         }
-        binding.check3.setOnCheckedChangeListener { View, isChecked ->
+        binding.check3.setOnCheckedChangeListener { _, isChecked ->
             checkCongestion = isChecked
         }
 
+        val spinner: Spinner = findViewById(R.id.time)
+        ArrayAdapter.createFromResource(
+            this,
+            R.array.times,
+            android.R.layout.simple_spinner_dropdown_item
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinner.adapter = adapter
+        }
+
+        spinner.setSelection(baseHour.toInt())
+
+        binding.optionBtn.setOnClickListener {
+            if (checkSmooth || checkNormal || checkCongestion) {
+                binding.mapView.removeAllPOIItems()
+                marking(this, spinner)
+            } else {
+             Toast.makeText(this, "혼잡도 옵션을 최소 1개 선택해주세요.", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         binding.mapView.setCalloutBalloonAdapter(CustomBalloonAdapter(this, layoutInflater))
 
@@ -332,7 +358,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.mapView.setMapViewEventListener(this)
         binding.mapView.setPOIItemEventListener(this)
 
-        marking()
+        marking(this, spinner)
 
         class CurrentLocationListener : MapView.CurrentLocationEventListener {
             override fun onCurrentLocationUpdateFailed(p0: MapView?) {
@@ -367,23 +393,49 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 Toast.makeText(applicationContext, "단말의 각도 값 요청", Toast.LENGTH_LONG).show()
             }
         }
-
         binding.mapView.setCurrentLocationEventListener(CurrentLocationListener())
-
-
-
     }
 
-    private fun marking() {
-        val current = LocalDateTime.now()
-        val formatDate = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val formatHour = DateTimeFormatter.ofPattern("HH")
-        val baseDate = current.format(formatDate)
-        val baseHour = current.format(formatHour)
+    private fun marking(context: Context, spinner: Spinner) {
+        binding.dateText.text = baseDate
+
+        binding.calendar.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+            val maxDate = calendar.clone() as Calendar
+            maxDate.add(Calendar.DAY_OF_MONTH, 6)
+
+            DatePickerDialog(context, { _, year, month, day ->
+                run {
+                    baseDate = if (month + 1 < 10) {
+                        if (day < 10) {
+                            "${year}0${month + 1}0${day}"
+                        } else {
+                            "${year}0${month + 1}${day}"
+                        }
+                    } else {
+                        if (day < 10) {
+                            "${year}${month + 1}0${day}"
+                        } else{
+                            "${year}${month + 1}${day}"
+                        }
+                    }
+                    binding.dateText.text = baseDate
+                }
+            }, year, month, day).apply {
+                datePicker.minDate = System.currentTimeMillis()
+                datePicker.maxDate = maxDate.timeInMillis
+            }.show()
+        }
+
+        baseHour = spinner.selectedItem.toString()
 
         checkToken(this)
 
-        val url = "http://49.142.162.247:8050/recommand"
+        val url = "http://49.142.162.247:8050/recommand2"
 
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
