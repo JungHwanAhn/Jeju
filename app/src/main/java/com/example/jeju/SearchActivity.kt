@@ -90,8 +90,6 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
         if(userLocation != null) {
             latitude = userLocation.latitude
             longitude = userLocation.longitude
-            Log.d("checkLocation", "${latitude}, ${longitude}")
-
         }
 
         val option = intent.getStringExtra("option")

@@ -88,7 +88,7 @@ class MapDialog(context: Context) : Dialog(context) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         val inflater = LayoutInflater.from(context)
-        val requestQueue = Volley.newRequestQueue(context)
+        requestQueue = Volley.newRequestQueue(context)
         val dialogView: View = inflater.inflate(R.layout.map_dialog, null)
         setContentView(dialogView)
 
@@ -250,6 +250,8 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
     private var introduction: String? = null
     private var address: String? = null
     private var image: String? = null
+    private var chargingPlace: String? = null
+    private var chargingAddress: String? = null
 
     var checkSmooth: Boolean = true
     var checkNormal: Boolean = true
@@ -335,7 +337,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.optionBtn.setOnClickListener {
             if (checkSmooth || checkNormal || checkCongestion) {
                 binding.mapView.removeAllPOIItems()
-                marking(this, spinner)
+                tourMarking(this, spinner)
             } else {
              Toast.makeText(this, "혼잡도 옵션을 최소 1개 선택해주세요.", Toast.LENGTH_SHORT).show()
             }
@@ -358,7 +360,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.mapView.setMapViewEventListener(this)
         binding.mapView.setPOIItemEventListener(this)
 
-        marking(this, spinner)
+        tourMarking(this, spinner)
 
         class CurrentLocationListener : MapView.CurrentLocationEventListener {
             override fun onCurrentLocationUpdateFailed(p0: MapView?) {
@@ -396,7 +398,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.mapView.setCurrentLocationEventListener(CurrentLocationListener())
     }
 
-    private fun marking(context: Context, spinner: Spinner) {
+    private fun tourMarking(context: Context, spinner: Spinner) {
         binding.dateText.text = baseDate
 
         binding.calendar.setOnClickListener {
@@ -409,6 +411,22 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             maxDate.add(Calendar.DAY_OF_MONTH, 6)
 
             DatePickerDialog(context, { _, year, month, day ->
+                val selectedDate = Calendar.getInstance()
+                selectedDate.set(year, month, day)
+
+                if (selectedDate.after(maxDate)) {
+                    var builder = AlertDialog.Builder(context)
+                    val dialogView = layoutInflater.inflate(R.layout.date_dialog, null)
+
+                    builder.setView(dialogView)
+                        .setPositiveButton("확인") { _, _ ->
+
+                        }
+                        .setNegativeButton("취소") { _, _ ->
+
+                        }.show()
+                }
+
                 run {
                     baseDate = if (month + 1 < 10) {
                         if (day < 10) {
@@ -427,7 +445,6 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 }
             }, year, month, day).apply {
                 datePicker.minDate = System.currentTimeMillis()
-                datePicker.maxDate = maxDate.timeInMillis
             }.show()
         }
 
@@ -449,10 +466,53 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             { response ->
                 // 결과 받아서 처리
                 for (i in 0 until response.length()) {
-                    image = response.getJSONObject(i).getString("imagepath")
                     title = response.getJSONObject(i).getString("title")
                     address = response.getJSONObject(i).getString("roadaddress")
-                    tourId = response.getJSONObject(i).getString("tourId")
+                    val latitude = response.getJSONObject(i).getDouble("latitude")
+                    val longitude = response.getJSONObject(i).getDouble("longitude")
+                    val traffic = response.getJSONObject(i).getString("traffic")
+
+                    val point = MapPoint.mapPointWithGeoCoord(
+                        latitude,
+                        longitude
+                    )
+
+                    if (checkSmooth && traffic == "0") {
+                        createSmoothMaker(point)
+                    } else if(checkNormal && traffic == "1") {
+                        createNormalMaker(point)
+                    } else if(checkCongestion && traffic == "2") {
+                        createCongestionMaker(point)
+                    }
+                }
+            },
+            { error ->
+                // 에러 처리
+                Toast.makeText(this, "관광지 데이터 요청 실패!", Toast.LENGTH_SHORT).show()
+                Log.e("MapActivity", "관광지 데이터 요청 실패!", error)
+            })
+        requestQueue.add(request)
+    }
+
+    private fun chargeMarking(context: Context, centerPoint: MapPoint) {
+        checkToken(this)
+
+        val url = "http://49.142.162.247:8050/charge/coordinate"
+
+        val jsonRequest = JSONArray().apply {
+            put(JSONObject().apply {
+                put("latitude", centerPoint!!.mapPointGeoCoord.latitude)
+                put("longitude", centerPoint!!.mapPointGeoCoord.longitude)
+            })
+        }
+
+        val request = JsonArrayRequest(
+            Request.Method.POST, url, jsonRequest,
+            { response ->
+                // 결과 받아서 처리
+                for (i in 0 until response.length()) {
+                    chargingPlace = response.getJSONObject(i).getString("chargingplace")
+                    chargingAddress = response.getJSONObject(i).getString("chargingAddress")
                     val latitude = response.getJSONObject(i).getDouble("latitude")
                     val longitude = response.getJSONObject(i).getDouble("longitude")
                     val traffic = response.getJSONObject(i).getString("traffic")
@@ -487,7 +547,6 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         override fun getCalloutBalloon(poiItem: MapPOIItem?): View {
             checkToken(context)
             val url = "http://49.142.162.247:8050/search/title"
-
             val jsonRequest = JSONArray().apply {
                 put(JSONObject().apply {
                     put("email", email)
