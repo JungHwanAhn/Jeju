@@ -23,6 +23,7 @@
 
         <LinearLayout
             android:id="@+id/map_option"
+            android:tag="open"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
@@ -52,18 +53,17 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="보통"
-                    android:id="@+id/check2"
-                    android:checked="true" />
+                    android:id="@+id/check2" />
                 <CheckBox
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="혼잡"
-                    android:id="@+id/check3"
-                    android:checked="true" />
+                    android:id="@+id/check3"/>
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/date_option"
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -106,7 +106,7 @@
                     android:spinnerMode="dropdown"/>
 
                 <Button
-                    android:id="@+id/option_btn"
+                    android:id="@+id/tour_option_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
@@ -115,6 +115,16 @@
                     android:text="검색"/>
 
             </LinearLayout>
+
+            <Button
+                android:id="@+id/charge_option_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginEnd="15dp"
+                android:backgroundTint="@color/orange"
+                android:visibility="gone"
+                android:text="검색"/>
 
             <View
                 android:layout_width="match_parent"
@@ -141,6 +151,8 @@
                 android:src="@drawable/ic_less"/>
 
             <RelativeLayout
+                android:id="@+id/charge_map"
+                android:tag="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|end"

@@ -1,6 +1,7 @@
 package com.example.jeju
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -21,6 +22,7 @@ import com.kakao.sdk.common.model.ClientError
 import com.navercorp.nid.oauth.NidOAuthLogin
 import com.navercorp.nid.profile.NidProfileCallback
 import com.navercorp.nid.profile.data.NidProfileResponse
+import kotlin.system.exitProcess
 
 private const val kakao_key = BuildConfig.KAKAO_LOGIN_KEY
 class MainActivity : AppCompatActivity() {
@@ -31,8 +33,10 @@ class MainActivity : AppCompatActivity() {
 
     val naver_key = BuildConfig.NAVER_CLIENT_SECRET
     val naver_id = BuildConfig.NAVER_CLIENT_ID
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         NaverIdLoginSDK.initialize(this, naver_id, naver_key, "제주앱")
 
@@ -293,5 +297,20 @@ class GlobalApplication : Application() {
         super.onCreate()
         // Kakao SDK 초기화
         KakaoSdk.init(this, kakao_key)
+
+        val exceptionHandler = MyExceptionHandler(this)
+        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
+    }
+}
+
+class MyExceptionHandler(private val context: Context) : Thread.UncaughtExceptionHandler {
+    override fun uncaughtException(thread: Thread, throwable: Throwable) {
+        // 예외 처리 로직을 여기에 작성합니다.
+        // 예를 들어, 로그를 기록하거나 사용자에게 오류 메시지를 표시할 수 있습니다.
+        // 예시: Toast 메시지로 사용자에게 오류를 알립니다.
+        Toast.makeText(context, "앱이 예기치 않은 오류로 종료되었습니다.", Toast.LENGTH_LONG).show()
+
+        // 앱을 종료합니다.
+        exitProcess(1)
     }
 }

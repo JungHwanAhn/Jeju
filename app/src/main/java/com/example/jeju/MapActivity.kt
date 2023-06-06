@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Paint
+import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -253,9 +255,9 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
     private var chargingPlace: String? = null
     private var chargingAddress: String? = null
 
-    var checkSmooth: Boolean = true
-    var checkNormal: Boolean = true
-    var checkCongestion: Boolean = true
+    private var checkSmooth: Boolean = true
+    private var checkNormal: Boolean = false
+    private var checkCongestion: Boolean = false
 
     private val ACCESS_FINE_LOCATION = 1000 // Request Code
 
@@ -263,6 +265,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
     lateinit var drawerLayout: DrawerLayout
     private lateinit var requestQueue: RequestQueue
     private lateinit var binding: ActivityMapBinding
+    private lateinit var locationManager: LocationManager
 
     private val current = LocalDateTime.now()
     private val formatDate = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -304,11 +307,39 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             if (binding.mapOption.tag == "open") {
                 binding.optionDrawer.setImageResource(R.drawable.ic_more)
                 binding.mapOption.visibility = View.GONE
+                binding.dateOption.visibility = View.GONE
+                binding.chargeOptionBtn.visibility = View.GONE
                 binding.mapOption.tag = "close"
             } else {
                 binding.optionDrawer.setImageResource(R.drawable.ic_less)
                 binding.mapOption.visibility = View.VISIBLE
+                binding.dateOption.visibility = View.VISIBLE
+                if (binding.chargeMap.tag == "true") {
+                    binding.dateOption.visibility = View.GONE
+                    binding.chargeOptionBtn.visibility = View.VISIBLE
+                }
                 binding.mapOption.tag = "open"
+            }
+        }
+
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        var userLocation: Location? = getLatLng()
+
+        binding.chargeBtn.setOnClickListener {
+            if (binding.mapOption.tag == "close") {
+                binding.mapOption.tag = "open"
+            }
+            binding.mapOption.visibility = View.VISIBLE
+            if (binding.chargeMap.tag == "false") {
+                binding.dateOption.visibility = View.GONE
+                binding.chargeOptionBtn.visibility = View.VISIBLE
+                binding.chargeMap.tag = "true"
+                binding.mapView.removeAllPOIItems()
+                chargeMarking(this, userLocation!!)
+            } else {
+                binding.dateOption.visibility = View.VISIBLE
+                binding.chargeOptionBtn.visibility = View.GONE
+                binding.chargeMap.tag = "false"
             }
         }
 
@@ -334,12 +365,21 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
 
         spinner.setSelection(baseHour.toInt())
 
-        binding.optionBtn.setOnClickListener {
+        binding.tourOptionBtn.setOnClickListener {
             if (checkSmooth || checkNormal || checkCongestion) {
                 binding.mapView.removeAllPOIItems()
                 tourMarking(this, spinner)
             } else {
              Toast.makeText(this, "혼잡도 옵션을 최소 1개 선택해주세요.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.chargeOptionBtn.setOnClickListener {
+            if (checkSmooth || checkNormal || checkCongestion) {
+                binding.mapView.removeAllPOIItems()
+                chargeMarking(this, userLocation!!)
+            } else {
+                Toast.makeText(this, "혼잡도 옵션을 최소 1개 선택해주세요.", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -396,6 +436,31 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             }
         }
         binding.mapView.setCurrentLocationEventListener(CurrentLocationListener())
+    }
+
+    private fun getLatLng(): Location {
+        var currentLatLng: Location? = null
+        var hasFineLocationPermission = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        var hasCoarseLocationPermission = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
+            hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
+            val locationProvider = LocationManager.GPS_PROVIDER
+            currentLatLng = locationManager?.getLastKnownLocation(locationProvider)
+
+        } else {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Toast.makeText(this, "앱을 실행하려면 위치 접근 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
+            } else {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), ACCESS_FINE_LOCATION)
+            }
+            currentLatLng = getLatLng()
+        }
+        return currentLatLng!!
     }
 
     private fun tourMarking(context: Context, spinner: Spinner) {
@@ -494,15 +559,15 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         requestQueue.add(request)
     }
 
-    private fun chargeMarking(context: Context, centerPoint: MapPoint) {
+    private fun chargeMarking(context: Context, userLocation: Location) {
         checkToken(this)
 
         val url = "http://49.142.162.247:8050/charge/coordinate"
 
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
-                put("latitude", centerPoint!!.mapPointGeoCoord.latitude)
-                put("longitude", centerPoint!!.mapPointGeoCoord.longitude)
+                put("latitude", userLocation.latitude)
+                put("longitude", userLocation.longitude)
             })
         }
 
@@ -512,7 +577,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 // 결과 받아서 처리
                 for (i in 0 until response.length()) {
                     chargingPlace = response.getJSONObject(i).getString("chargingplace")
-                    chargingAddress = response.getJSONObject(i).getString("chargingAddress")
+                    chargingAddress = response.getJSONObject(i).getString("address")
                     val latitude = response.getJSONObject(i).getDouble("latitude")
                     val longitude = response.getJSONObject(i).getDouble("longitude")
                     val traffic = response.getJSONObject(i).getString("traffic")
@@ -533,8 +598,8 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             },
             { error ->
                 // 에러 처리
-                Toast.makeText(this, "관광지 데이터 요청 실패!", Toast.LENGTH_SHORT).show()
-                Log.e("MapActivity", "관광지 데이터 요청 실패!", error)
+                Toast.makeText(this, "충전소 데이터 요청 실패!", Toast.LENGTH_SHORT).show()
+                Log.e("MapActivity", "충전소 데이터 요청 실패!", error)
             })
         requestQueue.add(request)
     }
@@ -545,41 +610,45 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         private val addressTextView: TextView = mCalloutBalloon.findViewById(R.id.ball_tv_address)
 
         override fun getCalloutBalloon(poiItem: MapPOIItem?): View {
-            checkToken(context)
-            val url = "http://49.142.162.247:8050/search/title"
-            val jsonRequest = JSONArray().apply {
-                put(JSONObject().apply {
-                    put("email", email)
-                    put("title", poiItem?.itemName)
-                    put("option", "0")
-                    put("latitude", "0")
-                    put("longitude", "0")
-                })
+            if (binding.chargeMap.tag == "false") {
+                checkToken(context)
+                val url = "http://49.142.162.247:8050/search/title"
+                val jsonRequest = JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("email", email)
+                        put("title", poiItem?.itemName)
+                        put("option", "0")
+                        put("latitude", "0")
+                        put("longitude", "0")
+                    })
+                }
+
+                val request = JsonArrayRequest(
+                    Request.Method.POST, url, jsonRequest,
+                    { response ->
+                        // 결과 받아서 처리
+                        for (i in 0 until response.length()) {
+                            title = response.getJSONObject(i).getString("title")
+                            tourId = response.getJSONObject(i).getString("tourId")
+                            like = response.getJSONObject(i).getString("interested")
+                            introduction = response.getJSONObject(i).getString("introduction")
+                            address = response.getJSONObject(i).getString("roadaddress")
+                            image = response.getJSONObject(i).getString("imagepath")
+                        }
+
+                    },
+                    { error ->
+                        // 에러 처리
+                        Toast.makeText(context, "검색결과 요청 실패!", Toast.LENGTH_SHORT).show()
+                        Log.e("MapActivity", "검색결과 요청 실패!", error)
+                    })
+                requestQueue.add(request)
+                addressTextView.text = address
+            } else {
+                addressTextView.text = chargingAddress
             }
 
-            val request = JsonArrayRequest(
-                Request.Method.POST, url, jsonRequest,
-                { response ->
-                    // 결과 받아서 처리
-                    for (i in 0 until response.length()) {
-                        title = response.getJSONObject(i).getString("title")
-                        tourId = response.getJSONObject(i).getString("tourId")
-                        like = response.getJSONObject(i).getString("interested")
-                        introduction = response.getJSONObject(i).getString("introduction")
-                        address = response.getJSONObject(i).getString("roadaddress")
-                        image = response.getJSONObject(i).getString("imagepath")
-                    }
-
-                },
-                { error ->
-                    // 에러 처리
-                    Toast.makeText(context, "검색결과 요청 실패!", Toast.LENGTH_SHORT).show()
-                    Log.e("SearchActivity", "검색결과 요청 실패!", error)
-                })
-            requestQueue.add(request)
             nameTextView.text = poiItem?.itemName
-            addressTextView.text = address
-
             return mCalloutBalloon
         }
 
@@ -625,7 +694,11 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
 
     private fun createSmoothMaker(point: MapPoint) {
         val customMaker = MapPOIItem()
-        customMaker.itemName = title
+        if (binding.chargeMap.tag == "true") {
+            customMaker.itemName = chargingPlace
+        } else {
+            customMaker.itemName = title
+        }
         customMaker.mapPoint = point
         customMaker.markerType = MapPOIItem.MarkerType.BluePin
         customMaker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
@@ -636,7 +709,11 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
 
     private fun createNormalMaker(point: MapPoint) {
         val customMaker = MapPOIItem()
-        customMaker.itemName = title
+        if (binding.chargeMap.tag == "true") {
+            customMaker.itemName = chargingPlace
+        } else {
+            customMaker.itemName = title
+        }
         customMaker.mapPoint = point
         customMaker.markerType = MapPOIItem.MarkerType.YellowPin
         customMaker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
@@ -647,7 +724,11 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
 
     private fun createCongestionMaker(point: MapPoint) {
         val customMaker = MapPOIItem()
-        customMaker.itemName = title
+        if (binding.chargeMap.tag == "true") {
+            customMaker.itemName = chargingPlace
+        } else {
+            customMaker.itemName = title
+        }
         customMaker.mapPoint = point
         customMaker.markerType = MapPOIItem.MarkerType.RedPin
         customMaker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
@@ -731,15 +812,17 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         p1: MapPOIItem?,
         p2: MapPOIItem.CalloutBalloonButtonType?
     ) {
-        val mapDialog = MapDialog(this@MapActivity)
-        mapDialog.setLoginToken(loginToken!!)
-        mapDialog.setImageResId(image!!)
-        mapDialog.setTitle(title!!)
-        mapDialog.setIntroduction(introduction!!)
-        mapDialog.setLike(like!!)
-        mapDialog.setTourId(tourId!!)
-        mapDialog.setEmail(email!!)
-        mapDialog.show()
+        if (binding.chargeMap.tag == "false") {
+            val mapDialog = MapDialog(this@MapActivity)
+            mapDialog.setLoginToken(loginToken!!)
+            mapDialog.setImageResId(image!!)
+            mapDialog.setTitle(title!!)
+            mapDialog.setIntroduction(introduction!!)
+            mapDialog.setLike(like!!)
+            mapDialog.setTourId(tourId!!)
+            mapDialog.setEmail(email!!)
+            mapDialog.show()
+        }
     }
 
     override fun onDraggablePOIItemMoved(p0: MapView?, p1: MapPOIItem?, p2: MapPoint?) {

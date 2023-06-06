@@ -294,6 +294,41 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     override fun onBackPressed() {
         // 뒤로가기 버튼 클릭
         if(System.currentTimeMillis() - backPressedTime < 2000 ) {
+            val url = "http://49.142.162.247:8050/oauth/logout"
+            val logoutData: Map<String, String?> = hashMapOf(
+                "logout" to loginToken
+            )
+            Log.e("HomeActivity", loginToken.toString())
+
+            val requestBody = JSONObject(logoutData).toString()
+
+            val logoutRequest = object : StringRequest(
+                Method.POST,
+                url,
+                Response.Listener<String> { response ->
+                    // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
+                    if (response == "success") {
+                        // 로그아웃에 성공한 경우 처리할 코드를 작성합니다.
+                        Log.e("HomeActivity", "로그아웃 성공!")
+                    } else {
+                        // 로그아웃에 실패한 경우 처리할 코드를 작성합니다.
+                        Log.e("HomeActivity", "로그아웃 실패!")
+                    }
+                },
+                Response.ErrorListener { error ->
+                    // 요청 실패 시 수행되는 코드를 작성합니다.
+                    Toast.makeText(this@HomeActivity, "로그아웃 요청이 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+
+                override fun getBody(): ByteArray {
+                    return requestBody.toByteArray(Charsets.UTF_8)
+                }
+            }
+            requestQueue.add(logoutRequest)
             finish()
             return
         }
