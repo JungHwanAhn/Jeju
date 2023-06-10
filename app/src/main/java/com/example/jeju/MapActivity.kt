@@ -6,6 +6,7 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.graphics.Paint
 import android.location.Location
 import android.location.LocationManager
@@ -325,22 +326,18 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         var userLocation: Location? = getLatLng()
 
-        binding.chargeBtn.setOnClickListener {
-            if (binding.mapOption.tag == "close") {
-                binding.mapOption.tag = "open"
-            }
-            binding.mapOption.visibility = View.VISIBLE
-            if (binding.chargeMap.tag == "false") {
-                binding.dateOption.visibility = View.GONE
-                binding.chargeOptionBtn.visibility = View.VISIBLE
-                binding.chargeMap.tag = "true"
-                binding.mapView.removeAllPOIItems()
-                chargeMarking(this, userLocation!!)
-            } else {
-                binding.dateOption.visibility = View.VISIBLE
-                binding.chargeOptionBtn.visibility = View.GONE
-                binding.chargeMap.tag = "false"
-            }
+        binding.chargeNearBtn.setOnClickListener {
+            binding.chargeNearBtn.setBackgroundColor(Color.parseColor("#CCCCCC"))
+            binding.chargeAllBtn.setBackgroundColor(Color.WHITE)
+            binding.mapView.removeAllPOIItems()
+            chargeMarking(userLocation!!, "2")
+        }
+
+        binding.chargeAllBtn.setOnClickListener {
+            binding.chargeNearBtn.setBackgroundColor(Color.WHITE)
+            binding.chargeAllBtn.setBackgroundColor(Color.parseColor("#CCCCCC"))
+            binding.mapView.removeAllPOIItems()
+            chargeMarking(userLocation!!, "1")
         }
 
         binding.check1.setOnCheckedChangeListener { _, isChecked ->
@@ -377,9 +374,35 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.chargeOptionBtn.setOnClickListener {
             if (checkSmooth || checkNormal || checkCongestion) {
                 binding.mapView.removeAllPOIItems()
-                chargeMarking(this, userLocation!!)
+                chargeMarking(userLocation!!, "2")
             } else {
                 Toast.makeText(this, "혼잡도 옵션을 최소 1개 선택해주세요.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.chargeBtn.setOnClickListener {
+            if (binding.mapOption.tag == "close") {
+                binding.mapOption.tag = "open"
+            }
+            binding.mapOption.visibility = View.VISIBLE
+            if (binding.chargeMap.tag == "false") {
+                binding.dateOption.visibility = View.GONE
+                binding.chargeOptionBtn.visibility = View.VISIBLE
+                binding.tourSearch.visibility = View.GONE
+                binding.tourOptionBtn.visibility = View.GONE
+                binding.chargeMap.tag = "true"
+                binding.chargePrint.visibility = View.VISIBLE
+                binding.mapView.removeAllPOIItems()
+                chargeMarking(userLocation!!, "2")
+            } else {
+                binding.dateOption.visibility = View.VISIBLE
+                binding.chargeOptionBtn.visibility = View.GONE
+                binding.tourSearch.visibility = View.VISIBLE
+                binding.tourOptionBtn.visibility = View.VISIBLE
+                binding.chargeMap.tag = "false"
+                binding.chargePrint.visibility = View.GONE
+                binding.mapView.removeAllPOIItems()
+                tourMarking(this, spinner)
             }
         }
 
@@ -533,6 +556,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 for (i in 0 until response.length()) {
                     title = response.getJSONObject(i).getString("title")
                     address = response.getJSONObject(i).getString("roadaddress")
+                    val mTourId = response.getJSONObject(i).getInt("tourId")
                     val latitude = response.getJSONObject(i).getDouble("latitude")
                     val longitude = response.getJSONObject(i).getDouble("longitude")
                     val traffic = response.getJSONObject(i).getString("traffic")
@@ -541,7 +565,6 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                         latitude,
                         longitude
                     )
-
                     if (checkSmooth && traffic == "0") {
                         createSmoothMaker(point)
                     } else if(checkNormal && traffic == "1") {
@@ -559,7 +582,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         requestQueue.add(request)
     }
 
-    private fun chargeMarking(context: Context, userLocation: Location) {
+    private fun chargeMarking(userLocation: Location, option: String) {
         checkToken(this)
 
         val url = "http://49.142.162.247:8050/charge/coordinate"
@@ -568,6 +591,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             put(JSONObject().apply {
                 put("latitude", userLocation.latitude)
                 put("longitude", userLocation.longitude)
+                put("option", option)
             })
         }
 

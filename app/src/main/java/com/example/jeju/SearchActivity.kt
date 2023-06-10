@@ -135,40 +135,44 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
             })
         }
 
-        val request = JsonArrayRequest(
-            Request.Method.POST, url, jsonRequest,
-            { response ->
-                // 결과 받아서 처리
-                if (response.length() > 0) {
-                    for (i in 0 until response.length()) {
-                        val title = response.getJSONObject(i).getString("title")
-                        val tourId = response.getJSONObject(i).getString("tourId")
-                        val like = response.getJSONObject(i).getString("interested")
-                        val introduction = response.getJSONObject(i).getString("introduction")
-                        val image = response.getJSONObject(i).getString("imagepath")
+        if (searchTerm.isBlank()) {
+            Toast.makeText(this, "검색어를 입력해주세요.", Toast.LENGTH_SHORT).show()
+        } else {
+            val request = JsonArrayRequest(
+                Request.Method.POST, url, jsonRequest,
+                { response ->
+                    // 결과 받아서 처리
+                    if (response.length() > 0) {
+                        for (i in 0 until response.length()) {
+                            val title = response.getJSONObject(i).getString("title")
+                            val tourId = response.getJSONObject(i).getString("tourId")
+                            val like = response.getJSONObject(i).getString("interested")
+                            val introduction = response.getJSONObject(i).getString("introduction")
+                            val image = response.getJSONObject(i).getString("imagepath")
 
-                        val result = Result(title, tourId, like, introduction, image)
-                        results.add(result)
+                            val result = Result(title, tourId, like, introduction, image)
+                            results.add(result)
 
+                            val noResultsText = findViewById<TextView>(R.id.no_results_text)
+                            noResultsText.visibility = View.GONE
+                        }
+                        resultAdapter.notifyDataSetChanged()
+                    } else {
                         val noResultsText = findViewById<TextView>(R.id.no_results_text)
-                        noResultsText.visibility = View.GONE
+                        noResultsText.visibility = View.VISIBLE
                     }
-                    resultAdapter.notifyDataSetChanged()
-                } else {
-                    val noResultsText = findViewById<TextView>(R.id.no_results_text)
-                    noResultsText.visibility = View.VISIBLE
-                }
-            },
-            { error ->
-                // 에러 처리
-                Toast.makeText(this, "검색결과 요청 실패!", Toast.LENGTH_SHORT).show()
-                Log.e("SearchActivity", "검색결과 요청 실패!", error)
-            })
-        requestQueue.add(request)
+                },
+                { error ->
+                    // 에러 처리
+                    Toast.makeText(this, "검색결과 요청 실패!", Toast.LENGTH_SHORT).show()
+                    Log.e("SearchActivity", "검색결과 요청 실패!", error)
+                })
+            requestQueue.add(request)
 
-        resultRecyclerView = findViewById(R.id.result_list)
-        resultAdapter = SearchAdapter(this, results, intent.getStringExtra("email").toString(), intent.getStringExtra("login").toString())
-        resultRecyclerView.adapter = resultAdapter
+            resultRecyclerView = findViewById(R.id.result_list)
+            resultAdapter = SearchAdapter(this, results, intent.getStringExtra("email").toString(), intent.getStringExtra("login").toString())
+            resultRecyclerView.adapter = resultAdapter
+        }
     }
 
     private fun getLatLng(): Location {

@@ -160,17 +160,22 @@ class HomeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
 
         binding.searchBtn.setOnClickListener {
             val searchTerm = binding.searchEdit.text.toString()
-            val intent = Intent(this, SearchActivity::class.java)
 
-            when (binding.searchOption.checkedRadioButtonId) {
-                R.id.option_default -> intent.putExtra("option", "0")
-                R.id.option_traffic -> intent.putExtra("option", "1")
-                R.id.option_location -> intent.putExtra("option", "2")
+            if (searchTerm.isBlank()) {
+                Toast.makeText(this, "검색어를 입력해주세요.", Toast.LENGTH_SHORT).show()
+            } else {
+                val intent = Intent(this, SearchActivity::class.java)
+
+                when (binding.searchOption.checkedRadioButtonId) {
+                    R.id.option_default -> intent.putExtra("option", "0")
+                    R.id.option_traffic -> intent.putExtra("option", "1")
+                    R.id.option_location -> intent.putExtra("option", "2")
+                }
+                intent.putExtra("result", searchTerm)
+                intent.putExtra("email", userEmail)
+                intent.putExtra("login", loginToken)
+                startActivity(intent)
             }
-            intent.putExtra("result", searchTerm)
-            intent.putExtra("email", userEmail)
-            intent.putExtra("login", loginToken)
-            startActivity(intent)
         }
     }
 

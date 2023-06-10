@@ -28,18 +28,18 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:gravity="center"
-                android:textColor="@color/black"
-                android:text="혼잡도"/>
-
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:gravity="center"
+                    android:textColor="@color/black"
+                    android:text="혼잡도 :"/>
                 <CheckBox
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -68,53 +68,89 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginTop="15dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:text="날    짜 :"
+                        android:textColor="@color/black"/>
+
+                    <TextView
+                        android:id="@+id/date_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:textColor="@color/black"/>
+
+                    <ImageButton
+                        android:id="@+id/calendar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_calendar"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="15dp"
+                        android:text="시    간 :"
+                        android:textColor="@color/black"/>
+
+                    <Spinner
+                        android:id="@+id/time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:spinnerMode="dropdown"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tour_search"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
-                    android:text="날짜 :"
-                    android:textColor="@color/black"/>
-
-                <TextView
-                    android:id="@+id/date_text"
-                    android:layout_width="wrap_content"
+                    android:gravity="center"
+                    android:textColor="@color/black"
+                    android:text="검    색 :"/>
+                <EditText
+                    android:id="@+id/tour_edit_text"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="7dp"
-                    android:textColor="@color/black"/>
-
-                <ImageButton
-                    android:id="@+id/calendar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginTop="16dp"
-                    android:background="@android:color/transparent"
-                    android:src="@drawable/ic_calendar"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="시간 :"
-                    android:textColor="@color/black"/>
-
-                <Spinner
-                    android:id="@+id/time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:spinnerMode="dropdown"/>
-
-                <Button
-                    android:id="@+id/tour_option_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="15dp"
-                    android:backgroundTint="@color/orange"
-                    android:text="검색"/>
+                    android:layout_marginEnd="20dp"
+                    android:textSize="15sp"
+                    android:inputType="text"
+                    android:hint="관광지 검색"/>
 
             </LinearLayout>
+
+            <Button
+                android:id="@+id/tour_option_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:backgroundTint="@color/orange"
+                android:text="검색"/>
 
             <Button
                 android:id="@+id/charge_option_btn"
@@ -141,6 +177,32 @@
                 android:id="@+id/mapView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
+
+            <LinearLayout
+                android:id="@+id/charge_print"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="top|start"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="2dp">
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/charge_near_btn"
+                    android:layout_width="70dp"
+                    android:layout_height="30dp"
+                    android:textSize="11sp"
+                    android:background="@drawable/near_place_btn"
+                    android:text="가까운 충전소"/>
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/charge_all_btn"
+                    android:layout_width="70dp"
+                    android:layout_height="30dp"
+                    android:textSize="11sp"
+                    android:background="@drawable/all_place_btn"
+                    android:text="모든 충전소"/>
+            </LinearLayout>
+
 
             <ImageButton
                 android:id="@+id/option_drawer"
