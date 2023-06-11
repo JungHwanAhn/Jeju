@@ -488,7 +488,8 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
 
     private fun tourMarking(context: Context, spinner: Spinner) {
         binding.dateText.text = baseDate
-
+        val searchTerm = binding.tourEditText.text.toString()
+        println(searchTerm)
         binding.calendar.setOnClickListener {
             val calendar = Calendar.getInstance()
             val year = calendar.get(Calendar.YEAR)
@@ -544,6 +545,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
 
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
+                put("title", searchTerm)
                 put("baseDate", baseDate)
                 put("baseHour", baseHour)
             })
