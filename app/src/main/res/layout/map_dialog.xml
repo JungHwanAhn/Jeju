@@ -52,6 +52,15 @@
             android:textColor="@android:color/black"
             android:paddingTop="4dp" />
 
+        <TextView
+            android:id="@+id/map_tel"
+            android:text="전화걸기"
+            android:textColor="@color/blue"
+            android:layout_marginTop="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"/>
+
     </LinearLayout>
 
 </FrameLayout>

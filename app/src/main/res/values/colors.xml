@@ -16,4 +16,5 @@
     <color name="colorAccent">#FF4081</color>
     <color name="lightorange">#FFC107</color>
     <color name="gray">#CCCCCC</color>
+    <color name="blue">#0000FF</color>
 </resources>

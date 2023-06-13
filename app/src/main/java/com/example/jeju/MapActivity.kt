@@ -47,6 +47,7 @@ import net.daum.mf.map.api.MapPoint
 import net.daum.mf.map.api.MapView
 import org.json.JSONArray
 import org.json.JSONObject
+import org.w3c.dom.Text
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -58,6 +59,7 @@ class MapDialog(context: Context) : Dialog(context) {
     private var like: String? = null
     private var tourId: String? = null
     private var email: String? = null
+    private var phone: String? = null
     private var introduction: String? = null
 
     private lateinit var requestQueue: RequestQueue
@@ -87,6 +89,10 @@ class MapDialog(context: Context) : Dialog(context) {
     fun setEmail(email: String) {
         this.email = email
     }
+
+    fun setPhone(phone: String) {
+        this.phone = phone
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -98,6 +104,7 @@ class MapDialog(context: Context) : Dialog(context) {
         val titleTextView: TextView = dialogView.findViewById(R.id.map_dialog_title)
         val introduceTextView: TextView = dialogView.findViewById(R.id.map_dialog_introduce)
         val imageView: ImageView = dialogView.findViewById(R.id.map_dialog_image)
+        val phoneTextView: TextView = dialogView.findViewById(R.id.map_tel)
         val heartButton: ImageButton = dialogView.findViewById(R.id.map_heart_button)
         val imageUrl = image
         if (!imageUrl.isNullOrEmpty()) {
@@ -111,6 +118,12 @@ class MapDialog(context: Context) : Dialog(context) {
         else {
             heartButton.setImageResource(R.drawable.ic_heart_empty)
             heartButton.tag = "empty"
+        }
+
+        phoneTextView.setOnClickListener {
+            val phoneUri = Uri.parse("tel:${phone}")
+            val intent = Intent(Intent.ACTION_DIAL, phoneUri)
+            context.startActivity(intent)
         }
 
         heartButton.setOnClickListener {
@@ -253,6 +266,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
     private var introduction: String? = null
     private var address: String? = null
     private var image: String? = null
+    private var phone: String? = null
     private var chargingPlace: String? = null
     private var chargingAddress: String? = null
 
@@ -558,7 +572,6 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 for (i in 0 until response.length()) {
                     title = response.getJSONObject(i).getString("title")
                     address = response.getJSONObject(i).getString("roadaddress")
-                    val mTourId = response.getJSONObject(i).getInt("tourId")
                     val latitude = response.getJSONObject(i).getDouble("latitude")
                     val longitude = response.getJSONObject(i).getDouble("longitude")
                     val traffic = response.getJSONObject(i).getString("traffic")
@@ -638,14 +651,11 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         override fun getCalloutBalloon(poiItem: MapPOIItem?): View {
             if (binding.chargeMap.tag == "false") {
                 checkToken(context)
-                val url = "http://49.142.162.247:8050/search/title"
+                val url = "http://49.142.162.247:8050/search/detail"
                 val jsonRequest = JSONArray().apply {
                     put(JSONObject().apply {
                         put("email", email)
                         put("title", poiItem?.itemName)
-                        put("option", "0")
-                        put("latitude", "0")
-                        put("longitude", "0")
                     })
                 }
 
@@ -660,6 +670,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                             introduction = response.getJSONObject(i).getString("introduction")
                             address = response.getJSONObject(i).getString("roadaddress")
                             image = response.getJSONObject(i).getString("imagepath")
+                            phone = response.getJSONObject(i).getString("phoneno")
                         }
 
                     },
@@ -847,6 +858,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             mapDialog.setLike(like!!)
             mapDialog.setTourId(tourId!!)
             mapDialog.setEmail(email!!)
+            mapDialog.setPhone(phone!!)
             mapDialog.show()
         }
     }
