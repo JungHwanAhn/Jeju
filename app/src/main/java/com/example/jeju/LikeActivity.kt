@@ -19,7 +19,6 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.jeju.databinding.ActivityLikeBinding
-import com.example.jeju.databinding.ActivitySearchBinding
 import com.example.jeju.databinding.NavHeaderBinding
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
@@ -86,6 +85,7 @@ class LikeActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         val jsonRequest = JSONArray().apply {
             put(JSONObject().apply {
                 put("email", intent.getStringExtra("email"))
+                put("token", loginToken)
             })
         }
 

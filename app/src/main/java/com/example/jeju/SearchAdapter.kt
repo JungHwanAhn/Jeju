@@ -117,7 +117,8 @@ class SearchAdapter(private val context: Context, private val results: List<Resu
         val addUrl = "http://49.142.162.247:8050/interest/add"
         val addData: Map<String, String> = hashMapOf(
             "email" to email,
-            "tourid" to result.tourId
+            "tourid" to result.tourId,
+            "token" to loginToken
         )
 
         val requestBody = JSONObject(addData).toString()
@@ -159,7 +160,8 @@ class SearchAdapter(private val context: Context, private val results: List<Resu
         val deleteUrl = "http://49.142.162.247:8050/interest/delete"
         val deleteData: Map<String, String> = hashMapOf(
             "email" to email,
-            "tourid" to result.tourId
+            "tourid" to result.tourId,
+            "token" to loginToken
         )
         val requestBody = JSONObject(deleteData).toString()
 
@@ -216,7 +218,7 @@ class SearchAdapter(private val context: Context, private val results: List<Resu
             },
             Response.ErrorListener { error ->
                 // 요청 실패 시 수행되는 코드를 작성합니다.
-                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Log.e("SearchAdapter", "토큰 체크 실패!", error)
                 Toast.makeText(context, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
             }
         ) {

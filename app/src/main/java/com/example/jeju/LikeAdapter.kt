@@ -1,6 +1,5 @@
 package com.example.jeju
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -69,7 +68,8 @@ class LikeAdapter(private val context: Context, private var likeList: List<Item>
                     val addUrl = "http://49.142.162.247:8050/interest/add"
                     val addData: Map<String, String> = hashMapOf(
                         "email" to email,
-                        "tourid" to item.tourId
+                        "tourid" to item.tourId,
+                        "token" to loginToken
                     )
 
                     val requestBody = JSONObject(addData).toString()
@@ -111,7 +111,8 @@ class LikeAdapter(private val context: Context, private var likeList: List<Item>
                     val deleteUrl = "http://49.142.162.247:8050/interest/delete"
                     val deleteData: Map<String, String> = hashMapOf(
                         "email" to email,
-                        "tourid" to item.tourId
+                        "tourid" to item.tourId,
+                        "token" to loginToken
                     )
                     val requestBody = JSONObject(deleteData).toString()
 

@@ -7,16 +7,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.graphics.Paint
 import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.UnderlineSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -47,7 +43,6 @@ import net.daum.mf.map.api.MapPoint
 import net.daum.mf.map.api.MapView
 import org.json.JSONArray
 import org.json.JSONObject
-import org.w3c.dom.Text
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -134,7 +129,8 @@ class MapDialog(context: Context) : Dialog(context) {
                 val addUrl = "http://49.142.162.247:8050/interest/add"
                 val addData: Map<String, String> = hashMapOf(
                     "email" to email.toString(),
-                    "tourid" to tourId.toString()
+                    "tourid" to tourId.toString(),
+                    "token" to loginToken.toString()
                 )
 
                 val requestBody = JSONObject(addData).toString()
@@ -147,16 +143,16 @@ class MapDialog(context: Context) : Dialog(context) {
                         // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
                         if (response == "success") {
                             Toast.makeText(context, "찜 등록!", Toast.LENGTH_SHORT).show()
-                            Log.e("SearchAdapter", "찜 등록!")
+                            Log.e("MapActivity", "찜 등록!")
                         }
                         else {
                             Toast.makeText(context, "찜 등록 실패", Toast.LENGTH_SHORT).show()
-                            Log.e("SearchAdapter", "찜 등록 실패")
+                            Log.e("MapActivity", "찜 등록 실패")
                         }
                     },
                     Response.ErrorListener { error ->
                         // 요청 실패 시 수행되는 코드를 작성합니다.
-                        Log.e("SearchAdapter", "error!", error)
+                        Log.e("MapActivity", "error!", error)
                         Toast.makeText(context, "error!", Toast.LENGTH_SHORT).show()
                     }) {
                     override fun getBodyContentType(): String {
@@ -176,7 +172,8 @@ class MapDialog(context: Context) : Dialog(context) {
                 val deleteUrl = "http://49.142.162.247:8050/interest/delete"
                 val deleteData: Map<String, String> = hashMapOf(
                     "email" to email.toString(),
-                    "tourid" to tourId.toString()
+                    "tourid" to tourId.toString(),
+                    "token" to loginToken.toString()
                 )
                 val requestBody = JSONObject(deleteData).toString()
 
@@ -188,16 +185,16 @@ class MapDialog(context: Context) : Dialog(context) {
                         // 서버로부터 응답을 받았을 때 수행되는 코드를 작성합니다.
                         if (response == "success") {
                             Toast.makeText(context, "찜 삭제!", Toast.LENGTH_SHORT).show()
-                            Log.e("SearchAdapter", "찜 삭제!")
+                            Log.e("MapActivity", "찜 삭제!")
                         }
                         else {
                             Toast.makeText(context, "찜 삭제 실패", Toast.LENGTH_SHORT).show()
-                            Log.e("SearchAdapter", "찜 삭제 실패")
+                            Log.e("MapActivity", "찜 삭제 실패")
                         }
                     },
                     Response.ErrorListener { error ->
                         // 요청 실패 시 수행되는 코드를 작성합니다.
-                        Log.e("SearchAdapter", "error!", error)
+                        Log.e("MapActivity", "error!", error)
                         Toast.makeText(context, "error!", Toast.LENGTH_SHORT).show()
                     }) {
                     override fun getBodyContentType(): String {
@@ -238,7 +235,7 @@ class MapDialog(context: Context) : Dialog(context) {
             },
             Response.ErrorListener { error ->
                 // 요청 실패 시 수행되는 코드를 작성합니다.
-                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Log.e("MapActivity", "토큰 체크 실패!", error)
                 Toast.makeText(context, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
             }
         ) {
@@ -343,6 +340,8 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.chargeNearBtn.setOnClickListener {
             binding.chargeNearBtn.setBackgroundColor(Color.parseColor("#CCCCCC"))
             binding.chargeAllBtn.setBackgroundColor(Color.WHITE)
+            binding.chargeNearBtn.tag = "clicked"
+            binding.chargeAllBtn.tag = "nonClicked"
             binding.mapView.removeAllPOIItems()
             chargeMarking(userLocation!!, "2")
         }
@@ -350,6 +349,8 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.chargeAllBtn.setOnClickListener {
             binding.chargeNearBtn.setBackgroundColor(Color.WHITE)
             binding.chargeAllBtn.setBackgroundColor(Color.parseColor("#CCCCCC"))
+            binding.chargeNearBtn.tag = "nonClicked"
+            binding.chargeAllBtn.tag = "clicked"
             binding.mapView.removeAllPOIItems()
             chargeMarking(userLocation!!, "1")
         }
@@ -388,7 +389,12 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         binding.chargeOptionBtn.setOnClickListener {
             if (checkSmooth || checkNormal || checkCongestion) {
                 binding.mapView.removeAllPOIItems()
-                chargeMarking(userLocation!!, "2")
+                if (binding.chargeNearBtn.tag == "clicked") {
+                    chargeMarking(userLocation!!, "2")
+                } else {
+                    chargeMarking(userLocation!!, "1")
+                }
+
             } else {
                 Toast.makeText(this, "혼잡도 옵션을 최소 1개 선택해주세요.", Toast.LENGTH_SHORT).show()
             }
@@ -405,6 +411,10 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
                 binding.tourSearch.visibility = View.GONE
                 binding.tourOptionBtn.visibility = View.GONE
                 binding.chargeMap.tag = "true"
+                binding.chargeNearBtn.setBackgroundColor(Color.WHITE)
+                binding.chargeAllBtn.setBackgroundColor(Color.parseColor("#CCCCCC"))
+                binding.chargeNearBtn.tag = "clicked"
+                binding.chargeAllBtn.tag = "nonClicked"
                 binding.chargePrint.visibility = View.VISIBLE
                 binding.mapView.removeAllPOIItems()
                 chargeMarking(userLocation!!, "2")

@@ -4,19 +4,14 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Geocoder
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -35,7 +30,6 @@ import com.example.jeju.databinding.NavHeaderBinding
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.*
 
 data class Result(
     val title: String,
@@ -132,6 +126,7 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                 put("option", option)
                 put("latitude", latitude)
                 put("longitude", longitude)
+                put("token", loginToken)
             })
         }
 
@@ -258,7 +253,7 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                 val logoutData: Map<String, String?> = hashMapOf(
                     "logout" to loginToken
                 )
-                Log.e("MainActivity", loginToken.toString())
+                Log.e("SearchActivity", loginToken.toString())
 
                 val requestBody = JSONObject(logoutData).toString()
 
@@ -270,7 +265,7 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                         if (response == "success") {
                             // 로그아웃에 성공한 경우 처리할 코드를 작성합니다.
                             Toast.makeText(this@SearchActivity, "로그아웃하였습니다.", Toast.LENGTH_SHORT).show()
-                            Log.e("HomeActivity", "로그아웃 성공!")
+                            Log.e("SearchActivity", "로그아웃 성공!")
                             val intent = Intent(this@SearchActivity, MainActivity::class.java)
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                             startActivity(intent)
@@ -278,12 +273,12 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
                         } else {
                             // 로그아웃에 실패한 경우 처리할 코드를 작성합니다.
                             Toast.makeText(this@SearchActivity, "로그아웃에 실패하였습니다.", Toast.LENGTH_SHORT).show()
-                            Log.e("HomeActivity", "로그아웃 실패!")
+                            Log.e("SearchActivity", "로그아웃 실패!")
                         }
                     },
                     Response.ErrorListener { error ->
                         // 요청 실패 시 수행되는 코드를 작성합니다.
-                        Log.e("HomeActivity", "로그아웃 요청 실패!", error)
+                        Log.e("SearchActivity", "로그아웃 요청 실패!", error)
                         Toast.makeText(this@SearchActivity, "로그아웃 요청이 실패하였습니다.", Toast.LENGTH_SHORT).show()
                     }
                 ) {
@@ -323,7 +318,7 @@ class SearchActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelect
             },
             Response.ErrorListener { error ->
                 // 요청 실패 시 수행되는 코드를 작성합니다.
-                Log.e("HomeActivity", "토큰 체크 실패!", error)
+                Log.e("SearchActivity", "토큰 체크 실패!", error)
                 Toast.makeText(this, "토큰 체크에 실패하였습니다.", Toast.LENGTH_SHORT).show()
             }
         ) {

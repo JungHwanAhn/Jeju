@@ -6,15 +6,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
-import com.android.volley.toolbox.HttpHeaderParser
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.jeju.databinding.ActivitySignupBinding
-import org.json.JSONException
 import org.json.JSONObject
-import java.io.UnsupportedEncodingException
-import java.nio.charset.Charset
+import java.util.regex.Pattern
 
 class SignUpActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignupBinding
@@ -44,6 +40,7 @@ class SignUpActivity : AppCompatActivity() {
 
             // CheckBox의 체크 여부를 확인합니다.
             val isAgree = binding.agreeCheckbox.isChecked
+            val passwordPattern = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$"
 
             if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 Toast.makeText(this, "이메일을 정확히 입력해주세요.", Toast.LENGTH_SHORT).show()
@@ -55,6 +52,8 @@ class SignUpActivity : AppCompatActivity() {
                 Toast.makeText(this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show()
             } else if (!isAgree) {
                 Toast.makeText(this, "약관에 동의해주세요.", Toast.LENGTH_SHORT).show()
+            } else if (!Pattern.matches(passwordPattern, password)) {
+                Toast.makeText(this, "비밀번호는 8글자 이상 영문과 숫자를 포함해야 합니다.", Toast.LENGTH_SHORT).show();
             } else {
                 // 이메일과 비밀번호를 사용하여 로그인 처리
                 val signUpRequest = object : StringRequest(
