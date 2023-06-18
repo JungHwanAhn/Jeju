@@ -657,7 +657,7 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
         private val mCalloutBalloon: View = inflater.inflate(R.layout.balloon_layout, null)
         private val nameTextView: TextView = mCalloutBalloon.findViewById(R.id.ball_tv_name)
         private val addressTextView: TextView = mCalloutBalloon.findViewById(R.id.ball_tv_address)
-
+        private val detail: TextView = mCalloutBalloon.findViewById(R.id.ball_tv_detail)
         override fun getCalloutBalloon(poiItem: MapPOIItem?): View {
             if (binding.chargeMap.tag == "false") {
                 checkToken(context)
@@ -694,8 +694,13 @@ class MapActivity : AppCompatActivity(), MapView.POIItemEventListener,
             } else {
                 addressTextView.text = chargingAddress
             }
-
             nameTextView.text = poiItem?.itemName
+
+            if (binding.chargeMap.tag == "true") {
+                detail.visibility = View.GONE
+            } else {
+                detail.visibility = View.VISIBLE
+            }
             return mCalloutBalloon
         }
 
